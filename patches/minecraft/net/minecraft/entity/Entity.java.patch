@@ -1,0 +1,414 @@
+--- a/net/minecraft/entity/Entity.java
++++ b/net/minecraft/entity/Entity.java
+@@ -109,12 +_,13 @@
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+ 
+-public abstract class Entity implements INameable, ICommandSource {
++public abstract class Entity extends net.minecraftforge.common.capabilities.CapabilityProvider<Entity> implements INameable, ICommandSource, net.minecraftforge.common.extensions.IForgeEntity {
+    protected static final Logger LOGGER = LogManager.getLogger();
+    protected static final AtomicInteger ENTITY_COUNTER = new AtomicInteger();
+    private static final List<ItemStack> EMPTY_LIST = Collections.emptyList();
+    private static final AxisAlignedBB INITIAL_AABB = new AxisAlignedBB(0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D);
+    private static double viewScale = 1.0D;
++   @Deprecated // Forge: Use the getter to allow overriding in mods
+    private final EntityType<?> type;
+    private int id = ENTITY_COUNTER.incrementAndGet();
+    public boolean blocksBuilding;
+@@ -140,6 +_,7 @@
+    public boolean verticalCollision;
+    public boolean hurtMarked;
+    protected Vector3d stuckSpeedMultiplier = Vector3d.ZERO;
++   @Deprecated //Forge: Use isAlive, remove(boolean) and revive() instead of directly accessing this field. To allow the entity to react to and better control this information.
+    public boolean removed;
+    public float walkDistO;
+    public float walkDist;
+@@ -195,6 +_,7 @@
+    private float eyeHeight;
+ 
+    public Entity(EntityType<?> p_i48580_1_, World p_i48580_2_) {
++      super(Entity.class);
+       this.type = p_i48580_1_;
+       this.level = p_i48580_2_;
+       this.dimensions = p_i48580_1_.getDimensions();
+@@ -211,7 +_,11 @@
+       this.entityData.define(DATA_NO_GRAVITY, false);
+       this.entityData.define(DATA_POSE, Pose.STANDING);
+       this.defineSynchedData();
+-      this.eyeHeight = this.getEyeHeight(Pose.STANDING, this.dimensions);
++      net.minecraftforge.event.entity.EntityEvent.Size sizeEvent = net.minecraftforge.event.ForgeEventFactory.getEntitySizeForge(this, Pose.STANDING, this.dimensions, this.getEyeHeight(Pose.STANDING, this.dimensions));
++      this.dimensions = sizeEvent.getNewSize();
++      this.eyeHeight = sizeEvent.getNewEyeHeight();
++      net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.EntityEvent.EntityConstructing(this));
++      this.gatherCapabilities();
+    }
+ 
+    @OnlyIn(Dist.CLIENT)
+@@ -317,7 +_,13 @@
+    }
+ 
+    public void remove() {
++      this.remove(false);
++   }
++
++   public void remove(boolean keepData) {
+       this.removed = true;
++      if (!keepData)
++         this.invalidateCaps();
+    }
+ 
+    public void setPose(Pose p_213301_1_) {
+@@ -560,7 +_,7 @@
+ 
+             this.walkDist = (float)((double)this.walkDist + (double)MathHelper.sqrt(getHorizontalDistanceSqr(vector3d)) * 0.6D);
+             this.moveDist = (float)((double)this.moveDist + (double)MathHelper.sqrt(d0 * d0 + d1 * d1 + d2 * d2) * 0.6D);
+-            if (this.moveDist > this.nextStep && !blockstate.isAir()) {
++            if (this.moveDist > this.nextStep && !blockstate.isAir(this.level, blockpos)) {
+                this.nextStep = this.nextStep();
+                if (this.isInWater()) {
+                   Entity entity = this.isVehicle() && this.getControllingPassenger() != null ? this.getControllingPassenger() : this;
+@@ -575,7 +_,7 @@
+                } else {
+                   this.playStepSound(blockpos, blockstate);
+                }
+-            } else if (this.moveDist > this.nextFlap && this.makeFlySound() && blockstate.isAir()) {
++            } else if (this.moveDist > this.nextFlap && this.makeFlySound() && blockstate.isAir(this.level, blockpos)) {
+                this.nextFlap = this.playFlySound(this.moveDist);
+             }
+          }
+@@ -591,8 +_,9 @@
+ 
+          float f2 = this.getBlockSpeedFactor();
+          this.setDeltaMovement(this.getDeltaMovement().multiply((double)f2, 1.0D, (double)f2));
+-         if (this.level.getBlockStatesIfLoaded(this.getBoundingBox().deflate(0.001D)).noneMatch((p_233572_0_) -> {
+-            return p_233572_0_.is(BlockTags.FIRE) || p_233572_0_.is(Blocks.LAVA);
++         if (BlockPos.betweenClosedStream(this.getBoundingBox().deflate(0.001D)).noneMatch((p_233572_0_) -> {
++            BlockState state = level.getBlockState(p_233572_0_);
++            return state.is(BlockTags.FIRE) || state.is(Blocks.LAVA) || state.isBurning(level, p_233572_0_);
+          }) && this.remainingFireTicks <= 0) {
+             this.setRemainingFireTicks(-this.getFireImmuneTicks());
+          }
+@@ -611,11 +_,10 @@
+       int j = MathHelper.floor(this.position.y - (double)0.2F);
+       int k = MathHelper.floor(this.position.z);
+       BlockPos blockpos = new BlockPos(i, j, k);
+-      if (this.level.getBlockState(blockpos).isAir()) {
++      if (this.level.isEmptyBlock(blockpos)) {
+          BlockPos blockpos1 = blockpos.below();
+          BlockState blockstate = this.level.getBlockState(blockpos1);
+-         Block block = blockstate.getBlock();
+-         if (block.is(BlockTags.FENCES) || block.is(BlockTags.WALLS) || block instanceof FenceGateBlock) {
++         if (blockstate.collisionExtendsVertically(this.level, blockpos1, this)) {
+             return blockpos1;
+          }
+       }
+@@ -801,6 +_,7 @@
+    public void setLocationFromBoundingbox() {
+       AxisAlignedBB axisalignedbb = this.getBoundingBox();
+       this.setPosRaw((axisalignedbb.minX + axisalignedbb.maxX) / 2.0D, axisalignedbb.minY, (axisalignedbb.minZ + axisalignedbb.maxZ) / 2.0D);
++      if (this.isAddedToWorld() && !this.level.isClientSide && level instanceof ServerWorld) ((ServerWorld)this.level).updateChunkPos(this); // Forge - Process chunk registration after moving.
+    }
+ 
+    protected SoundEvent getSwimSound() {
+@@ -849,7 +_,7 @@
+    protected void playStepSound(BlockPos p_180429_1_, BlockState p_180429_2_) {
+       if (!p_180429_2_.getMaterial().isLiquid()) {
+          BlockState blockstate = this.level.getBlockState(p_180429_1_.above());
+-         SoundType soundtype = blockstate.is(Blocks.SNOW) ? blockstate.getSoundType() : p_180429_2_.getSoundType();
++         SoundType soundtype = blockstate.is(Blocks.SNOW) ? blockstate.getSoundType(level, p_180429_1_, this) : p_180429_2_.getSoundType(level, p_180429_1_, this);
+          this.playSound(soundtype.getStepSound(), soundtype.getVolume() * 0.15F, soundtype.getPitch());
+       }
+    }
+@@ -1056,9 +_,10 @@
+       int k = MathHelper.floor(this.getZ());
+       BlockPos blockpos = new BlockPos(i, j, k);
+       BlockState blockstate = this.level.getBlockState(blockpos);
++      if(!blockstate.addRunningEffects(level, blockpos, this))
+       if (blockstate.getRenderShape() != BlockRenderType.INVISIBLE) {
+          Vector3d vector3d = this.getDeltaMovement();
+-         this.level.addParticle(new BlockParticleData(ParticleTypes.BLOCK, blockstate), this.getX() + (this.random.nextDouble() - 0.5D) * (double)this.dimensions.width, this.getY() + 0.1D, this.getZ() + (this.random.nextDouble() - 0.5D) * (double)this.dimensions.width, vector3d.x * -4.0D, 1.5D, vector3d.z * -4.0D);
++         this.level.addParticle(new BlockParticleData(ParticleTypes.BLOCK, blockstate).setPos(blockpos), this.getX() + (this.random.nextDouble() - 0.5D) * (double)this.dimensions.width, this.getY() + 0.1D, this.getZ() + (this.random.nextDouble() - 0.5D) * (double)this.dimensions.width, vector3d.x * -4.0D, 1.5D, vector3d.z * -4.0D);
+       }
+ 
+    }
+@@ -1377,6 +_,7 @@
+          if (this.glowing) {
+             p_189511_1_.putBoolean("Glowing", this.glowing);
+          }
++         p_189511_1_.putBoolean("CanUpdate", canUpdate);
+ 
+          if (!this.tags.isEmpty()) {
+             ListNBT listnbt = new ListNBT();
+@@ -1388,6 +_,10 @@
+             p_189511_1_.put("Tags", listnbt);
+          }
+ 
++         CompoundNBT caps = serializeCaps();
++         if (caps != null) p_189511_1_.put("ForgeCaps", caps);
++         if (persistentData != null) p_189511_1_.put("ForgeData", persistentData);
++
+          this.addAdditionalSaveData(p_189511_1_);
+          if (this.isVehicle()) {
+             ListNBT listnbt1 = new ListNBT();
+@@ -1458,6 +_,9 @@
+                this.setSilent(p_70020_1_.getBoolean("Silent"));
+                this.setNoGravity(p_70020_1_.getBoolean("NoGravity"));
+                this.setGlowing(p_70020_1_.getBoolean("Glowing"));
++               if (p_70020_1_.contains("ForgeData", 10)) persistentData = p_70020_1_.getCompound("ForgeData");
++               if (p_70020_1_.contains("CanUpdate", 99)) this.canUpdate(p_70020_1_.getBoolean("CanUpdate"));
++               if (p_70020_1_.contains("ForgeCaps", 10)) deserializeCaps(p_70020_1_.getCompound("ForgeCaps"));
+                if (p_70020_1_.contains("Tags", 9)) {
+                   this.tags.clear();
+                   ListNBT listnbt3 = p_70020_1_.getList("Tags", 8);
+@@ -1546,6 +_,8 @@
+       } else {
+          ItemEntity itementity = new ItemEntity(this.level, this.getX(), this.getY() + (double)p_70099_2_, this.getZ(), p_70099_1_);
+          itementity.setDefaultPickUpDelay();
++         if (captureDrops() != null) captureDrops().add(itementity);
++         else
+          this.level.addFreshEntity(itementity);
+          return itementity;
+       }
+@@ -1582,6 +_,7 @@
+ 
+    public void rideTick() {
+       this.setDeltaMovement(Vector3d.ZERO);
++      if (canUpdate())
+       this.tick();
+       if (this.isPassenger()) {
+          this.getVehicle().positionRider(this);
+@@ -1627,6 +_,7 @@
+          }
+       }
+ 
++      if (!net.minecraftforge.event.ForgeEventFactory.canMountEntity(this, p_184205_1_, true)) return false;
+       if (p_184205_2_ || this.canRide(p_184205_1_) && p_184205_1_.canAddPassenger(this)) {
+          if (this.isPassenger()) {
+             this.stopRiding();
+@@ -1659,6 +_,7 @@
+    public void removeVehicle() {
+       if (this.vehicle != null) {
+          Entity entity = this.vehicle;
++         if (!net.minecraftforge.event.ForgeEventFactory.canMountEntity(this, entity, false)) return;
+          this.vehicle = null;
+          entity.removePassenger(this);
+       }
+@@ -1816,6 +_,7 @@
+       return !this.getPassengers().isEmpty();
+    }
+ 
++   @Deprecated //Forge: Use rider sensitive version
+    public boolean rideableUnderWater() {
+       return true;
+    }
+@@ -1948,7 +_,7 @@
+          this.setSecondsOnFire(8);
+       }
+ 
+-      this.hurt(DamageSource.LIGHTNING_BOLT, 5.0F);
++      this.hurt(DamageSource.LIGHTNING_BOLT, p_241841_2_.getDamage());
+    }
+ 
+    public void onAboveBubbleCol(boolean p_203002_1_) {
+@@ -2032,7 +_,7 @@
+    }
+ 
+    protected ITextComponent getTypeName() {
+-      return this.type.getDescription();
++      return this.getType().getDescription(); // Forge: Use getter to allow overriding by mods
+    }
+ 
+    public boolean is(Entity p_70028_1_) {
+@@ -2087,14 +_,19 @@
+ 
+    @Nullable
+    public Entity changeDimension(ServerWorld p_241206_1_) {
++      return this.changeDimension(p_241206_1_, p_241206_1_.getPortalForcer());
++   }
++   @Nullable
++   public Entity changeDimension(ServerWorld p_241206_1_, net.minecraftforge.common.util.ITeleporter teleporter) {
+       if (this.level instanceof ServerWorld && !this.removed) {
+          this.level.getProfiler().push("changeDimension");
+          this.unRide();
+          this.level.getProfiler().push("reposition");
+-         PortalInfo portalinfo = this.findDimensionEntryPoint(p_241206_1_);
++         PortalInfo portalinfo = teleporter.getPortalInfo(this, p_241206_1_, this::findDimensionEntryPoint);
+          if (portalinfo == null) {
+             return null;
+          } else {
++            Entity transportedEntity = teleporter.placeEntity(this, (ServerWorld) this.level, p_241206_1_, this.yRot, spawnPortal -> { //Forge: Start vanilla logic
+             this.level.getProfiler().popPush("reloading");
+             Entity entity = this.getType().create(p_241206_1_);
+             if (entity != null) {
+@@ -2102,17 +_,19 @@
+                entity.moveTo(portalinfo.pos.x, portalinfo.pos.y, portalinfo.pos.z, portalinfo.yRot, entity.xRot);
+                entity.setDeltaMovement(portalinfo.speed);
+                p_241206_1_.addFromAnotherDimension(entity);
+-               if (p_241206_1_.dimension() == World.END) {
++               if (spawnPortal && p_241206_1_.dimension() == World.END) {
+                   ServerWorld.makeObsidianPlatform(p_241206_1_);
+                }
+             }
++            return entity;
++            }); //Forge: End vanilla logic
+ 
+             this.removeAfterChangingDimensions();
+             this.level.getProfiler().pop();
+             ((ServerWorld)this.level).resetEmptyTime();
+             p_241206_1_.resetEmptyTime();
+             this.level.getProfiler().pop();
+-            return entity;
++            return transportedEntity;
+          }
+       } else {
+          return null;
+@@ -2154,7 +_,7 @@
+                   vector3d = new Vector3d(0.5D, 0.0D, 0.0D);
+                }
+ 
+-               return PortalSize.createPortalInfo(p_241829_1_, p_242275_2_, direction$axis, vector3d, this.getDimensions(this.getPose()), this.getDeltaMovement(), this.yRot, this.xRot);
++               return PortalSize.createPortalInfo(p_241829_1_, p_242275_2_, direction$axis, vector3d, this.getDimensionsForge(this.getPose()), this.getDeltaMovement(), this.yRot, this.xRot);
+             }).orElse((PortalInfo)null);
+          }
+       } else {
+@@ -2170,7 +_,7 @@
+    }
+ 
+    protected Vector3d getRelativePortalPosition(Direction.Axis p_241839_1_, TeleportationRepositioner.Result p_241839_2_) {
+-      return PortalSize.getRelativePosition(p_241839_2_, p_241839_1_, this.position(), this.getDimensions(this.getPose()));
++      return PortalSize.getRelativePosition(p_241839_2_, p_241839_1_, this.position(), this.getDimensionsForge(this.getPose()));
+    }
+ 
+    protected Optional<TeleportationRepositioner.Result> getExitPortal(ServerWorld p_241830_1_, BlockPos p_241830_2_, boolean p_241830_3_) {
+@@ -2321,8 +_,10 @@
+       EntitySize entitysize = this.dimensions;
+       Pose pose = this.getPose();
+       EntitySize entitysize1 = this.getDimensions(pose);
++      net.minecraftforge.event.entity.EntityEvent.Size sizeEvent = net.minecraftforge.event.ForgeEventFactory.getEntitySizeForge(this, pose, entitysize, entitysize1, this.getEyeHeight(pose, entitysize1));
++      entitysize1 = sizeEvent.getNewSize();
+       this.dimensions = entitysize1;
+-      this.eyeHeight = this.getEyeHeight(pose, entitysize1);
++      this.eyeHeight = sizeEvent.getNewEyeHeight();
+       if (entitysize1.width < entitysize.width) {
+          double d0 = (double)entitysize1.width / 2.0D;
+          this.setBoundingBox(new AxisAlignedBB(this.getX() - d0, this.getY(), this.getZ() - d0, this.getX() + d0, this.getY() + (double)entitysize1.height, this.getZ() + d0));
+@@ -2363,7 +_,7 @@
+    }
+ 
+    protected AxisAlignedBB getBoundingBoxForPose(Pose p_213321_1_) {
+-      EntitySize entitysize = this.getDimensions(p_213321_1_);
++      EntitySize entitysize = this.getDimensionsForge(p_213321_1_);
+       float f = entitysize.width / 2.0F;
+       Vector3d vector3d = new Vector3d(this.getX() - (double)f, this.getY(), this.getZ() - (double)f);
+       Vector3d vector3d1 = new Vector3d(this.getX() + (double)f, this.getY() + (double)entitysize.height, this.getZ() + (double)f);
+@@ -2374,13 +_,17 @@
+       this.bb = p_174826_1_;
+    }
+ 
++   /**
++    * @deprecated Can be overridden but call {@link #getEyeHeightForge(Pose, EntitySize)} instead.
++    */
++   @Deprecated
+    protected float getEyeHeight(Pose p_213316_1_, EntitySize p_213316_2_) {
+       return p_213316_2_.height * 0.85F;
+    }
+ 
+    @OnlyIn(Dist.CLIENT)
+    public float getEyeHeight(Pose p_213307_1_) {
+-      return this.getEyeHeight(p_213307_1_, this.getDimensions(p_213307_1_));
++      return this.getEyeHeightForge(p_213307_1_, this.getDimensionsForge(p_213307_1_));
+    }
+ 
+    public final float getEyeHeight() {
+@@ -2720,6 +_,10 @@
+ 
+    public abstract IPacket<?> getAddEntityPacket();
+ 
++   /**
++    * @deprecated Can be overridden but call {@link #getDimensionsForge(Pose)} instead.
++    */
++   @Deprecated
+    public EntitySize getDimensions(Pose p_213305_1_) {
+       return this.type.getDimensions();
+    }
+@@ -2796,6 +_,7 @@
+ 
+          this.movedSinceLastChunkCheck = true;
+       }
++      if (this.isAddedToWorld() && !this.level.isClientSide && !this.removed) this.level.getChunk((int) Math.floor(p_226288_1_) >> 4, (int) Math.floor(p_226288_5_) >> 4); // Forge - ensure target chunk is loaded.
+ 
+    }
+ 
+@@ -2810,5 +_,72 @@
+    @FunctionalInterface
+    public interface IMoveCallback {
+       void accept(Entity p_accept_1_, double p_accept_2_, double p_accept_4_, double p_accept_6_);
++   }
++
++   /* ================================== Forge Start =====================================*/
++
++   private boolean canUpdate = true;
++   @Override
++   public void canUpdate(boolean value) {
++      this.canUpdate = value;
++   }
++   @Override
++   public boolean canUpdate() {
++      return this.canUpdate;
++   }
++   private Collection<ItemEntity> captureDrops = null;
++   @Override
++   public Collection<ItemEntity> captureDrops() {
++      return captureDrops;
++   }
++   @Override
++   public Collection<ItemEntity> captureDrops(Collection<ItemEntity> value) {
++      Collection<ItemEntity> ret = captureDrops;
++      this.captureDrops = value;
++      return ret;
++   }
++   private CompoundNBT persistentData;
++   @Override
++   public CompoundNBT getPersistentData() {
++      if (persistentData == null)
++         persistentData = new CompoundNBT();
++      return persistentData;
++   }
++   @Override
++   public boolean canTrample(BlockState state, BlockPos pos, float fallDistance) {
++      return level.random.nextFloat() < fallDistance - 0.5F
++              && this instanceof LivingEntity
++              && (this instanceof PlayerEntity || net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(level, this))
++              && this.getBbWidth() * this.getBbWidth() * this.getBbHeight() > 0.512F;
++   }
++
++   /**
++    * Internal use for keeping track of entities that are tracked by a world, to
++    * allow guarantees that entity position changes will force a chunk load, avoiding
++    * potential issues with entity desyncing and bad chunk data.
++    */
++   private boolean isAddedToWorld;
++
++   @Override
++   public final boolean isAddedToWorld() { return this.isAddedToWorld; }
++
++   @Override
++   public void onAddedToWorld() { this.isAddedToWorld = true; }
++
++   @Override
++   public void onRemovedFromWorld() { this.isAddedToWorld = false; }
++
++   @Override
++   public void revive() {
++      this.removed = false;
++      this.reviveCaps();
++   }
++
++   // no AT because of overrides
++   /**
++    * Accessor method for {@link #getEyeHeight(Pose, EntitySize)}
++    */
++   public float getEyeHeightAccess(Pose pose, EntitySize size) {
++      return this.getEyeHeight(pose, size);
+    }
+ }

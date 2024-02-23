@@ -1,0 +1,13 @@
+--- a/net/minecraft/item/ChorusFruitItem.java
++++ b/net/minecraft/item/ChorusFruitItem.java
+@@ -29,7 +_,9 @@
+                p_77654_3_.stopRiding();
+             }
+ 
+-            if (p_77654_3_.randomTeleport(d3, d4, d5, true)) {
++            net.minecraftforge.event.entity.living.EntityTeleportEvent.ChorusFruit event = net.minecraftforge.event.ForgeEventFactory.onChorusFruitTeleport(p_77654_3_, d3, d4, d5);
++            if (event.isCanceled()) return itemstack;
++            if (p_77654_3_.randomTeleport(event.getTargetX(), event.getTargetY(), event.getTargetZ(), true)) {
+                SoundEvent soundevent = p_77654_3_ instanceof FoxEntity ? SoundEvents.FOX_TELEPORT : SoundEvents.CHORUS_FRUIT_TELEPORT;
+                p_77654_2_.playSound((PlayerEntity)null, d0, d1, d2, soundevent, SoundCategory.PLAYERS, 1.0F, 1.0F);
+                p_77654_3_.playSound(soundevent, 1.0F, 1.0F);

@@ -1,0 +1,24 @@
+--- a/net/minecraft/entity/passive/IronGolemEntity.java
++++ b/net/minecraft/entity/passive/IronGolemEntity.java
+@@ -120,9 +_,10 @@
+          int i = MathHelper.floor(this.getX());
+          int j = MathHelper.floor(this.getY() - (double)0.2F);
+          int k = MathHelper.floor(this.getZ());
+-         BlockState blockstate = this.level.getBlockState(new BlockPos(i, j, k));
+-         if (!blockstate.isAir()) {
+-            this.level.addParticle(new BlockParticleData(ParticleTypes.BLOCK, blockstate), this.getX() + ((double)this.random.nextFloat() - 0.5D) * (double)this.getBbWidth(), this.getY() + 0.1D, this.getZ() + ((double)this.random.nextFloat() - 0.5D) * (double)this.getBbWidth(), 4.0D * ((double)this.random.nextFloat() - 0.5D), 0.5D, ((double)this.random.nextFloat() - 0.5D) * 4.0D);
++         BlockPos pos = new BlockPos(i, j, k);
++         BlockState blockstate = this.level.getBlockState(pos);
++         if (!blockstate.isAir(this.level, pos)) {
++            this.level.addParticle(new BlockParticleData(ParticleTypes.BLOCK, blockstate).setPos(pos), this.getX() + ((double)this.random.nextFloat() - 0.5D) * (double)this.getBbWidth(), this.getY() + 0.1D, this.getZ() + ((double)this.random.nextFloat() - 0.5D) * (double)this.getBbWidth(), 4.0D * ((double)this.random.nextFloat() - 0.5D), 0.5D, ((double)this.random.nextFloat() - 0.5D) * 4.0D);
+          }
+       }
+ 
+@@ -149,6 +_,7 @@
+    public void readAdditionalSaveData(CompoundNBT p_70037_1_) {
+       super.readAdditionalSaveData(p_70037_1_);
+       this.setPlayerCreated(p_70037_1_.getBoolean("PlayerCreated"));
++      if(!level.isClientSide) //FORGE: allow this entity to be read from nbt on client. (Fixes MC-189565)
+       this.readPersistentAngerSaveData((ServerWorld)this.level, p_70037_1_);
+    }
+ 

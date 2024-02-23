@@ -1,0 +1,60 @@
+--- a/net/minecraft/world/gen/WorldGenRegion.java
++++ b/net/minecraft/world/gen/WorldGenRegion.java
+@@ -173,11 +_,11 @@
+ 
+    public boolean destroyBlock(BlockPos p_241212_1_, boolean p_241212_2_, @Nullable Entity p_241212_3_, int p_241212_4_) {
+       BlockState blockstate = this.getBlockState(p_241212_1_);
+-      if (blockstate.isAir()) {
++      if (blockstate.isAir(this, p_241212_1_)) {
+          return false;
+       } else {
+          if (p_241212_2_) {
+-            TileEntity tileentity = blockstate.getBlock().isEntityBlock() ? this.getBlockEntity(p_241212_1_) : null;
++            TileEntity tileentity = blockstate.hasTileEntity() ? this.getBlockEntity(p_241212_1_) : null;
+             Block.dropResources(blockstate, this.level, p_241212_1_, tileentity, p_241212_3_, ItemStack.EMPTY);
+          }
+ 
+@@ -197,11 +_,11 @@
+          if (compoundnbt != null) {
+             if ("DUMMY".equals(compoundnbt.getString("id"))) {
+                Block block = blockstate.getBlock();
+-               if (!(block instanceof ITileEntityProvider)) {
++               if (!blockstate.hasTileEntity()) {
+                   return null;
+                }
+ 
+-               tileentity = ((ITileEntityProvider)block).newBlockEntity(this.level);
++               tileentity = blockstate.createTileEntity(this.level);
+             } else {
+                tileentity = TileEntity.loadStatic(blockstate, compoundnbt);
+             }
+@@ -212,7 +_,7 @@
+             }
+          }
+ 
+-         if (blockstate.getBlock() instanceof ITileEntityProvider) {
++         if (blockstate.hasTileEntity()) {
+             LOGGER.warn("Tried to access a block entity before it was created. {}", (Object)p_175625_1_);
+          }
+ 
+@@ -228,9 +_,9 @@
+       }
+ 
+       Block block = p_241211_2_.getBlock();
+-      if (block.isEntityBlock()) {
++      if (p_241211_2_.hasTileEntity()) {
+          if (ichunk.getStatus().getChunkType() == ChunkStatus.Type.LEVELCHUNK) {
+-            ichunk.setBlockEntity(p_241211_1_, ((ITileEntityProvider)block).newBlockEntity(this));
++            ichunk.setBlockEntity(p_241211_1_, p_241211_2_.createTileEntity(this));
+          } else {
+             CompoundNBT compoundnbt = new CompoundNBT();
+             compoundnbt.putInt("x", p_241211_1_.getX());
+@@ -239,7 +_,7 @@
+             compoundnbt.putString("id", "DUMMY");
+             ichunk.setBlockEntityNbt(compoundnbt);
+          }
+-      } else if (blockstate != null && blockstate.getBlock().isEntityBlock()) {
++      } else if (blockstate != null && blockstate.hasTileEntity()) {
+          ichunk.removeBlockEntity(p_241211_1_);
+       }
+ 

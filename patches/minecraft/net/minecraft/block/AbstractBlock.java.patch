@@ -1,0 +1,172 @@
+--- a/net/minecraft/block/AbstractBlock.java
++++ b/net/minecraft/block/AbstractBlock.java
+@@ -60,7 +_,8 @@
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+-public abstract class AbstractBlock {
++//TODO, Delegates are weird here now, because Block extends this.
++public abstract class AbstractBlock extends net.minecraftforge.registries.ForgeRegistryEntry<Block> {
+    protected static final Direction[] UPDATE_SHAPE_ORDER = new Direction[]{Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH, Direction.DOWN, Direction.UP};
+    protected final Material material;
+    protected final boolean hasCollision;
+@@ -87,6 +_,8 @@
+       this.jumpFactor = p_i241196_1_.jumpFactor;
+       this.dynamicShape = p_i241196_1_.dynamicShape;
+       this.properties = p_i241196_1_;
++      final ResourceLocation lootTableCache = p_i241196_1_.drops;
++      this.lootTableSupplier = lootTableCache != null ? () -> lootTableCache : p_i241196_1_.lootTableSupplier != null ? p_i241196_1_.lootTableSupplier : () -> new ResourceLocation(this.getRegistryName().getNamespace(), "blocks/" + this.getRegistryName().getPath());
+    }
+ 
+    @Deprecated
+@@ -129,7 +_,7 @@
+ 
+    @Deprecated
+    public void onRemove(BlockState p_196243_1_, World p_196243_2_, BlockPos p_196243_3_, BlockState p_196243_4_, boolean p_196243_5_) {
+-      if (this.isEntityBlock() && !p_196243_1_.is(p_196243_4_.getBlock())) {
++      if (p_196243_1_.hasTileEntity() && (!p_196243_1_.is(p_196243_4_.getBlock()) || !p_196243_4_.hasTileEntity())) {
+          p_196243_2_.removeBlockEntity(p_196243_3_);
+       }
+ 
+@@ -191,7 +_,7 @@
+ 
+    @Deprecated
+    public boolean canBeReplaced(BlockState p_196253_1_, BlockItemUseContext p_196253_2_) {
+-      return this.material.isReplaceable() && (p_196253_2_.getItemInHand().isEmpty() || p_196253_2_.getItemInHand().getItem() != this.asItem());
++      return p_196253_1_.getMaterial().isReplaceable() && (p_196253_2_.getItemInHand().isEmpty() || p_196253_2_.getItemInHand().getItem() != this.asItem());
+    }
+ 
+    @Deprecated
+@@ -294,8 +_,8 @@
+       if (f == -1.0F) {
+          return 0.0F;
+       } else {
+-         int i = p_180647_2_.hasCorrectToolForDrops(p_180647_1_) ? 30 : 100;
+-         return p_180647_2_.getDestroySpeed(p_180647_1_) / f / (float)i;
++         int i = net.minecraftforge.common.ForgeHooks.canHarvestBlock(p_180647_1_, p_180647_2_, p_180647_3_, p_180647_4_) ? 30 : 100;
++         return p_180647_2_.getDigSpeed(p_180647_1_, p_180647_4_) / f / (float)i;
+       }
+    }
+ 
+@@ -321,14 +_,14 @@
+       return 0;
+    }
+ 
++   @Deprecated //Forge: Use state.hasTileEntity()
+    public final boolean isEntityBlock() {
+       return this instanceof ITileEntityProvider;
+    }
+ 
+    public final ResourceLocation getLootTable() {
+       if (this.drops == null) {
+-         ResourceLocation resourcelocation = Registry.BLOCK.getKey(this.asBlock());
+-         this.drops = new ResourceLocation(resourcelocation.getNamespace(), "blocks/" + resourcelocation.getPath());
++         this.drops = this.lootTableSupplier.get();
+       }
+ 
+       return this.drops;
+@@ -346,6 +_,14 @@
+       return this.properties.materialColor.apply(this.asBlock().defaultBlockState());
+    }
+ 
++   protected boolean isAir(BlockState state) {
++      return ((AbstractBlockState)state).isAir;
++   }
++
++   /* ======================================== FORGE START ===================================== */
++   private final java.util.function.Supplier<ResourceLocation> lootTableSupplier;
++   /* ========================================= FORGE END ====================================== */
++
+    public abstract static class AbstractBlockState extends StateHolder<Block, BlockState> {
+       private final int lightEmission;
+       private final boolean useShapeForLightOcclusion;
+@@ -424,18 +_,24 @@
+          return this.useShapeForLightOcclusion;
+       }
+ 
++      /** @deprecated use {@link BlockState#getLightValue(IBlockReader, BlockPos)} */
++      @Deprecated
+       public int getLightEmission() {
+          return this.lightEmission;
+       }
+ 
++      /** @deprecated use {@link BlockState#isAir(IBlockReader, BlockPos)} until 1.17, at which point this method will be undreprecated. See https://github.com/MinecraftForge/MinecraftForge/issues/7409 for more details */
++      @Deprecated
+       public boolean isAir() {
+-         return this.isAir;
++         return this.getBlock().isAir((BlockState)this);
+       }
+ 
+       public MaterialColor getMapColor(IBlockReader p_185909_1_, BlockPos p_185909_2_) {
+          return this.materialColor;
+       }
+ 
++      /** @deprecated use {@link BlockState#rotate(IWorld, BlockPos, Rotation)} */
++      @Deprecated
+       public BlockState rotate(Rotation p_185907_1_) {
+          return this.getBlock().rotate(this.asState(), p_185907_1_);
+       }
+@@ -802,8 +_,11 @@
+       private ResourceLocation drops;
+       private boolean canOcclude = true;
+       private boolean isAir;
++      private int harvestLevel = -1;
++      private net.minecraftforge.common.ToolType harvestTool;
++      private java.util.function.Supplier<ResourceLocation> lootTableSupplier;
+       private AbstractBlock.IExtendedPositionPredicate<EntityType<?>> isValidSpawn = (p_235832_0_, p_235832_1_, p_235832_2_, p_235832_3_) -> {
+-         return p_235832_0_.isFaceSturdy(p_235832_1_, p_235832_2_, Direction.UP) && p_235832_0_.getLightEmission() < 14;
++         return p_235832_0_.isFaceSturdy(p_235832_1_, p_235832_2_, Direction.UP) && p_235832_0_.getLightValue(p_235832_1_, p_235832_2_) < 14;
+       };
+       private AbstractBlock.IPositionPredicate isRedstoneConductor = (p_235853_0_, p_235853_1_, p_235853_2_) -> {
+          return p_235853_0_.getMaterial().isSolidBlocking() && p_235853_0_.isCollisionShapeFullBlock(p_235853_1_, p_235853_2_);
+@@ -863,6 +_,8 @@
+          abstractblock$properties.canOcclude = p_200950_0_.properties.canOcclude;
+          abstractblock$properties.isAir = p_200950_0_.properties.isAir;
+          abstractblock$properties.requiresCorrectToolForDrops = p_200950_0_.properties.requiresCorrectToolForDrops;
++         abstractblock$properties.harvestLevel = p_200950_0_.properties.harvestLevel;
++         abstractblock$properties.harvestTool = p_200950_0_.properties.harvestTool;
+          return abstractblock$properties;
+       }
+ 
+@@ -877,6 +_,24 @@
+          return this;
+       }
+ 
++      public AbstractBlock.Properties harvestLevel(int harvestLevel) {
++         this.harvestLevel = harvestLevel;
++         return this;
++      }
++
++      public AbstractBlock.Properties harvestTool(net.minecraftforge.common.ToolType harvestTool) {
++         this.harvestTool = harvestTool;
++         return this;
++      }
++
++      public int getHarvestLevel() {
++         return this.harvestLevel;
++      }
++
++      public net.minecraftforge.common.ToolType getHarvestTool() {
++         return this.harvestTool;
++      }
++
+       public AbstractBlock.Properties friction(float p_200941_1_) {
+          this.friction = p_200941_1_;
+          return this;
+@@ -932,9 +_,15 @@
+          return this;
+       }
+ 
++      @Deprecated // FORGE: Use the variant that takes a Supplier below
+       public AbstractBlock.Properties dropsLike(Block p_222379_1_) {
+-         this.drops = p_222379_1_.getLootTable();
++         this.lootTableSupplier = () -> p_222379_1_.delegate.get().getLootTable();
+          return this;
++      }
++
++      public AbstractBlock.Properties lootFrom(java.util.function.Supplier<? extends Block> blockIn) {
++          this.lootTableSupplier = () -> blockIn.get().getLootTable();
++          return this;
+       }
+ 
+       public AbstractBlock.Properties air() {

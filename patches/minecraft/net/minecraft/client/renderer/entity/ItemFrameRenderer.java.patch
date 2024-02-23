@@ -1,0 +1,45 @@
+--- a/net/minecraft/client/renderer/entity/ItemFrameRenderer.java
++++ b/net/minecraft/client/renderer/entity/ItemFrameRenderer.java
+@@ -50,7 +_,7 @@
+       if (!flag) {
+          BlockRendererDispatcher blockrendererdispatcher = this.minecraft.getBlockRenderer();
+          ModelManager modelmanager = blockrendererdispatcher.getBlockModelShaper().getModelManager();
+-         ModelResourceLocation modelresourcelocation = p_225623_1_.getItem().getItem() == Items.FILLED_MAP ? MAP_FRAME_LOCATION : FRAME_LOCATION;
++         ModelResourceLocation modelresourcelocation = p_225623_1_.getItem().getItem() instanceof FilledMapItem ? MAP_FRAME_LOCATION : FRAME_LOCATION;
+          p_225623_4_.pushPose();
+          p_225623_4_.translate(-0.5D, -0.5D, -0.5D);
+          blockrendererdispatcher.getModelRenderer().renderModel(p_225623_4_.last(), p_225623_5_.getBuffer(Atlases.solidBlockSheet()), (BlockState)null, modelmanager.getModel(modelresourcelocation), 1.0F, 1.0F, 1.0F, p_225623_6_, OverlayTexture.NO_OVERLAY);
+@@ -59,21 +_,21 @@
+ 
+       ItemStack itemstack = p_225623_1_.getItem();
+       if (!itemstack.isEmpty()) {
+-         boolean flag1 = itemstack.getItem() == Items.FILLED_MAP;
++         MapData mapdata = FilledMapItem.getOrCreateSavedData(itemstack, p_225623_1_.level);
+          if (flag) {
+             p_225623_4_.translate(0.0D, 0.0D, 0.5D);
+          } else {
+             p_225623_4_.translate(0.0D, 0.0D, 0.4375D);
+          }
+ 
+-         int i = flag1 ? p_225623_1_.getRotation() % 4 * 2 : p_225623_1_.getRotation();
++         int i = mapdata != null ? p_225623_1_.getRotation() % 4 * 2 : p_225623_1_.getRotation();
+          p_225623_4_.mulPose(Vector3f.ZP.rotationDegrees((float)i * 360.0F / 8.0F));
+-         if (flag1) {
++         if (!net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.RenderItemInFrameEvent(p_225623_1_, this, p_225623_4_, p_225623_5_, p_225623_6_))) {
++         if (mapdata != null) {
+             p_225623_4_.mulPose(Vector3f.ZP.rotationDegrees(180.0F));
+             float f = 0.0078125F;
+             p_225623_4_.scale(0.0078125F, 0.0078125F, 0.0078125F);
+             p_225623_4_.translate(-64.0D, -64.0D, 0.0D);
+-            MapData mapdata = FilledMapItem.getOrCreateSavedData(itemstack, p_225623_1_.level);
+             p_225623_4_.translate(0.0D, 0.0D, -1.0D);
+             if (mapdata != null) {
+                this.minecraft.gameRenderer.getMapRenderer().render(p_225623_4_, p_225623_5_, mapdata, true, p_225623_6_);
+@@ -81,6 +_,7 @@
+          } else {
+             p_225623_4_.scale(0.5F, 0.5F, 0.5F);
+             this.itemRenderer.renderStatic(itemstack, ItemCameraTransforms.TransformType.FIXED, p_225623_6_, OverlayTexture.NO_OVERLAY, p_225623_4_, p_225623_5_);
++         }
+          }
+       }
+ 

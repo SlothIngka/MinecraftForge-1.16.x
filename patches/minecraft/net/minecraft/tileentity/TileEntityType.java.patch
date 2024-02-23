@@ -1,0 +1,34 @@
+--- a/net/minecraft/tileentity/TileEntityType.java
++++ b/net/minecraft/tileentity/TileEntityType.java
+@@ -16,7 +_,7 @@
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+ 
+-public class TileEntityType<T extends TileEntity> {
++public class TileEntityType<T extends TileEntity> extends net.minecraftforge.registries.ForgeRegistryEntry<TileEntityType<?>> {
+    private static final Logger LOGGER = LogManager.getLogger();
+    public static final TileEntityType<FurnaceTileEntity> FURNACE = register("furnace", TileEntityType.Builder.of(FurnaceTileEntity::new, Blocks.FURNACE));
+    public static final TileEntityType<ChestTileEntity> CHEST = register("chest", TileEntityType.Builder.of(ChestTileEntity::new, Blocks.CHEST));
+@@ -54,6 +_,7 @@
+    private final Supplier<? extends T> factory;
+    private final Set<Block> validBlocks;
+    private final Type<?> dataType;
++   private final net.minecraftforge.common.util.ReverseTagWrapper<TileEntityType<?>> reverseTags = new net.minecraftforge.common.util.ReverseTagWrapper<>(this, () -> net.minecraft.tags.TagCollectionManager.getInstance().getCustomTypeCollection(net.minecraftforge.registries.ForgeRegistries.TILE_ENTITIES));
+ 
+    @Nullable
+    public static ResourceLocation getKey(TileEntityType<?> p_200969_0_) {
+@@ -73,6 +_,14 @@
+       this.factory = p_i51497_1_;
+       this.validBlocks = p_i51497_2_;
+       this.dataType = p_i51497_3_;
++   }
++
++   public java.util.Set<net.minecraft.util.ResourceLocation> getTags() {
++      return reverseTags.getTagNames();
++   }
++
++   public boolean isIn(net.minecraft.tags.ITag<TileEntityType<?>> tag) {
++      return tag.contains(this);
+    }
+ 
+    @Nullable

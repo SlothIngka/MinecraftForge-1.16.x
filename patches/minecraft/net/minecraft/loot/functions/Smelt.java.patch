@@ -1,0 +1,11 @@
+--- a/net/minecraft/loot/functions/Smelt.java
++++ b/net/minecraft/loot/functions/Smelt.java
+@@ -34,7 +_,7 @@
+             ItemStack itemstack = optional.get().getResultItem();
+             if (!itemstack.isEmpty()) {
+                ItemStack itemstack1 = itemstack.copy();
+-               itemstack1.setCount(p_215859_1_.getCount());
++               itemstack1.setCount(p_215859_1_.getCount() * itemstack.getCount()); //Forge: Support smelting returning multiple
+                return itemstack1;
+             }
+          }

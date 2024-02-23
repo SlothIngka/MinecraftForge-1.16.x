@@ -1,0 +1,26 @@
+--- a/net/minecraft/world/biome/BiomeGenerationSettings.java
++++ b/net/minecraft/world/biome/BiomeGenerationSettings.java
+@@ -47,6 +_,7 @@
+    });
+    private final Supplier<ConfiguredSurfaceBuilder<?>> surfaceBuilder;
+    private final Map<GenerationStage.Carving, List<Supplier<ConfiguredCarver<?>>>> carvers;
++   private final java.util.Set<GenerationStage.Carving> carversView;
+    private final List<List<Supplier<ConfiguredFeature<?, ?>>>> features;
+    private final List<Supplier<StructureFeature<?, ?>>> structureStarts;
+    private final List<ConfiguredFeature<?, ?>> flowerFeatures;
+@@ -59,10 +_,15 @@
+       this.flowerFeatures = p_i241935_3_.stream().flatMap(Collection::stream).map(Supplier::get).flatMap(ConfiguredFeature::getFeatures).filter((p_242490_0_) -> {
+          return p_242490_0_.feature == Feature.FLOWER;
+       }).collect(ImmutableList.toImmutableList());
++      this.carversView = java.util.Collections.unmodifiableSet(carvers.keySet());
+    }
+ 
+    public List<Supplier<ConfiguredCarver<?>>> getCarvers(GenerationStage.Carving p_242489_1_) {
+       return this.carvers.getOrDefault(p_242489_1_, ImmutableList.of());
++   }
++
++   public java.util.Set<GenerationStage.Carving> getCarvingStages() {
++       return this.carversView;
+    }
+ 
+    public boolean isValidStart(Structure<?> p_242493_1_) {

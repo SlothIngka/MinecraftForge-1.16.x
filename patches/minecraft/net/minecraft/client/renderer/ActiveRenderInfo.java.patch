@@ -1,0 +1,19 @@
+--- a/net/minecraft/client/renderer/ActiveRenderInfo.java
++++ b/net/minecraft/client/renderer/ActiveRenderInfo.java
+@@ -170,4 +_,16 @@
+       this.entity = null;
+       this.initialized = false;
+    }
++
++   public void setAnglesInternal(float yaw, float pitch) {
++      this.yRot = yaw;
++      this.xRot = pitch;
++   }
++
++   public net.minecraft.block.BlockState getBlockAtCamera() {
++      if (!this.initialized)
++         return net.minecraft.block.Blocks.AIR.defaultBlockState();
++      else
++         return this.level.getBlockState(this.blockPosition).getStateAtViewpoint(this.level, this.blockPosition, this.position);
++   }
+ }

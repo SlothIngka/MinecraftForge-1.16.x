@@ -1,0 +1,21 @@
+--- a/net/minecraft/inventory/container/GrindstoneContainer.java
++++ b/net/minecraft/inventory/container/GrindstoneContainer.java
+@@ -141,12 +_,13 @@
+             }
+ 
+             Item item = itemstack.getItem();
+-            int k = item.getMaxDamage() - itemstack.getDamageValue();
+-            int l = item.getMaxDamage() - itemstack1.getDamageValue();
+-            int i1 = k + l + item.getMaxDamage() * 5 / 100;
+-            i = Math.max(item.getMaxDamage() - i1, 0);
++            int k = itemstack.getMaxDamage() - itemstack.getDamageValue();
++            int l = itemstack.getMaxDamage() - itemstack1.getDamageValue();
++            int i1 = k + l + itemstack.getMaxDamage() * 5 / 100;
++            i = Math.max(itemstack.getMaxDamage() - i1, 0);
+             itemstack2 = this.mergeEnchants(itemstack, itemstack1);
+-            if (!itemstack2.isDamageableItem()) {
++            if (!itemstack2.isRepairable()) i = itemstack.getDamageValue();
++            if (!itemstack2.isDamageableItem() || !itemstack2.isRepairable()) {
+                if (!ItemStack.matches(itemstack, itemstack1)) {
+                   this.resultSlots.setItem(0, ItemStack.EMPTY);
+                   this.broadcastChanges();

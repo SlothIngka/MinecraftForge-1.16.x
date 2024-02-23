@@ -1,0 +1,151 @@
+--- a/net/minecraft/tileentity/AbstractFurnaceTileEntity.java
++++ b/net/minecraft/tileentity/AbstractFurnaceTileEntity.java
+@@ -91,6 +_,7 @@
+       this.recipeType = p_i49964_2_;
+    }
+ 
++   @Deprecated //Forge - get burn times by calling ForgeHooks#getBurnTime(ItemStack)
+    public static Map<Item, Integer> getFuel() {
+       Map<Item, Integer> map = Maps.newLinkedHashMap();
+       add(map, Items.LAVA_BUCKET, 20000);
+@@ -184,13 +_,13 @@
+       return this.litTime > 0;
+    }
+ 
+-   public void load(BlockState p_230337_1_, CompoundNBT p_230337_2_) {
++   public void load(BlockState p_230337_1_, CompoundNBT p_230337_2_) { //TODO: MARK
+       super.load(p_230337_1_, p_230337_2_);
+       this.items = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
+       ItemStackHelper.loadAllItems(p_230337_2_, this.items);
+-      this.litTime = p_230337_2_.getShort("BurnTime");
+-      this.cookingProgress = p_230337_2_.getShort("CookTime");
+-      this.cookingTotalTime = p_230337_2_.getShort("CookTimeTotal");
++      this.litTime = p_230337_2_.getInt("BurnTime");
++      this.cookingProgress = p_230337_2_.getInt("CookTime");
++      this.cookingTotalTime = p_230337_2_.getInt("CookTimeTotal");
+       this.litDuration = this.getBurnDuration(this.items.get(1));
+       CompoundNBT compoundnbt = p_230337_2_.getCompound("RecipesUsed");
+ 
+@@ -202,9 +_,9 @@
+ 
+    public CompoundNBT save(CompoundNBT p_189515_1_) {
+       super.save(p_189515_1_);
+-      p_189515_1_.putShort("BurnTime", (short)this.litTime);
+-      p_189515_1_.putShort("CookTime", (short)this.cookingProgress);
+-      p_189515_1_.putShort("CookTimeTotal", (short)this.cookingTotalTime);
++      p_189515_1_.putInt("BurnTime", this.litTime);
++      p_189515_1_.putInt("CookTime", this.cookingProgress);
++      p_189515_1_.putInt("CookTimeTotal", this.cookingTotalTime);
+       ItemStackHelper.saveAllItems(p_189515_1_, this.items);
+       CompoundNBT compoundnbt = new CompoundNBT();
+       this.recipesUsed.forEach((p_235643_1_, p_235643_2_) -> {
+@@ -230,12 +_,14 @@
+                this.litDuration = this.litTime;
+                if (this.isLit()) {
+                   flag1 = true;
++                  if (itemstack.hasContainerItem())
++                      this.items.set(1, itemstack.getContainerItem());
++                  else
+                   if (!itemstack.isEmpty()) {
+                      Item item = itemstack.getItem();
+                      itemstack.shrink(1);
+                      if (itemstack.isEmpty()) {
+-                        Item item1 = item.getCraftingRemainingItem();
+-                        this.items.set(1, item1 == null ? ItemStack.EMPTY : new ItemStack(item1));
++                        this.items.set(1, itemstack.getContainerItem());
+                      }
+                   }
+                }
+@@ -270,7 +_,7 @@
+ 
+    protected boolean canBurn(@Nullable IRecipe<?> p_214008_1_) {
+       if (!this.items.get(0).isEmpty() && p_214008_1_ != null) {
+-         ItemStack itemstack = p_214008_1_.getResultItem();
++         ItemStack itemstack = ((IRecipe<ISidedInventory>) p_214008_1_).assemble(this);
+          if (itemstack.isEmpty()) {
+             return false;
+          } else {
+@@ -279,10 +_,10 @@
+                return true;
+             } else if (!itemstack1.sameItem(itemstack)) {
+                return false;
+-            } else if (itemstack1.getCount() < this.getMaxStackSize() && itemstack1.getCount() < itemstack1.getMaxStackSize()) {
++            } else if (itemstack1.getCount() + itemstack.getCount() <= this.getMaxStackSize() && itemstack1.getCount() + itemstack.getCount() <= itemstack1.getMaxStackSize()) { // Forge fix: make furnace respect stack sizes in furnace recipes
+                return true;
+             } else {
+-               return itemstack1.getCount() < itemstack.getMaxStackSize();
++               return itemstack1.getCount() + itemstack.getCount() <= itemstack.getMaxStackSize(); // Forge fix: make furnace respect stack sizes in furnace recipes
+             }
+          }
+       } else {
+@@ -293,12 +_,12 @@
+    private void burn(@Nullable IRecipe<?> p_214007_1_) {
+       if (p_214007_1_ != null && this.canBurn(p_214007_1_)) {
+          ItemStack itemstack = this.items.get(0);
+-         ItemStack itemstack1 = p_214007_1_.getResultItem();
++         ItemStack itemstack1 = ((IRecipe<ISidedInventory>) p_214007_1_).assemble(this);
+          ItemStack itemstack2 = this.items.get(2);
+          if (itemstack2.isEmpty()) {
+             this.items.set(2, itemstack1.copy());
+          } else if (itemstack2.getItem() == itemstack1.getItem()) {
+-            itemstack2.grow(1);
++            itemstack2.grow(itemstack1.getCount());
+          }
+ 
+          if (!this.level.isClientSide) {
+@@ -318,7 +_,7 @@
+          return 0;
+       } else {
+          Item item = p_213997_1_.getItem();
+-         return getFuel().getOrDefault(item, 0);
++         return net.minecraftforge.common.ForgeHooks.getBurnTime(p_213997_1_, this.recipeType);
+       }
+    }
+ 
+@@ -327,7 +_,7 @@
+    }
+ 
+    public static boolean isFuel(ItemStack p_213991_0_) {
+-      return getFuel().containsKey(p_213991_0_.getItem());
++      return net.minecraftforge.common.ForgeHooks.getBurnTime(p_213991_0_, null) > 0;
+    }
+ 
+    public int[] getSlotsForFace(Direction p_180463_1_) {
+@@ -410,7 +_,7 @@
+          return true;
+       } else {
+          ItemStack itemstack = this.items.get(1);
+-         return isFuel(p_94041_2_) || p_94041_2_.getItem() == Items.BUCKET && itemstack.getItem() != Items.BUCKET;
++         return net.minecraftforge.common.ForgeHooks.getBurnTime(p_94041_2_, this.recipeType) > 0 || p_94041_2_.getItem() == Items.BUCKET && itemstack.getItem() != Items.BUCKET;
+       }
+    }
+ 
+@@ -473,5 +_,28 @@
+          p_194018_1_.accountStack(itemstack);
+       }
+ 
++   }
++
++   net.minecraftforge.common.util.LazyOptional<? extends net.minecraftforge.items.IItemHandler>[] handlers =
++           net.minecraftforge.items.wrapper.SidedInvWrapper.create(this, Direction.UP, Direction.DOWN, Direction.NORTH);
++
++   @Override
++   public <T> net.minecraftforge.common.util.LazyOptional<T> getCapability(net.minecraftforge.common.capabilities.Capability<T> capability, @Nullable Direction facing) {
++      if (!this.remove && facing != null && capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
++         if (facing == Direction.UP)
++            return handlers[0].cast();
++         else if (facing == Direction.DOWN)
++            return handlers[1].cast();
++         else
++            return handlers[2].cast();
++      }
++      return super.getCapability(capability, facing);
++   }
++
++   @Override
++   protected void invalidateCaps() {
++      super.invalidateCaps();
++      for (int x = 0; x < handlers.length; x++)
++        handlers[x].invalidate();
+    }
+ }

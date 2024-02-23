@@ -1,0 +1,14 @@
+--- a/net/minecraft/entity/ICrossbowUser.java
++++ b/net/minecraft/entity/ICrossbowUser.java
+@@ -24,9 +_,9 @@
+    void onCrossbowAttackPerformed();
+ 
+    default void performCrossbowAttack(LivingEntity p_234281_1_, float p_234281_2_) {
+-      Hand hand = ProjectileHelper.getWeaponHoldingHand(p_234281_1_, Items.CROSSBOW);
++      Hand hand = ProjectileHelper.getWeaponHoldingHand(p_234281_1_, item -> item instanceof CrossbowItem);
+       ItemStack itemstack = p_234281_1_.getItemInHand(hand);
+-      if (p_234281_1_.isHolding(Items.CROSSBOW)) {
++      if (p_234281_1_.isHolding(item -> item instanceof CrossbowItem)) {
+          CrossbowItem.performShooting(p_234281_1_.level, p_234281_1_, hand, itemstack, p_234281_2_, (float)(14 - p_234281_1_.level.getDifficulty().getId() * 4));
+       }
+ 

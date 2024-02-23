@@ -1,0 +1,10 @@
+--- a/net/minecraft/world/WorldSettings.java
++++ b/net/minecraft/world/WorldSettings.java
+@@ -62,6 +_,7 @@
+    }
+ 
+    public WorldSettings withDifficulty(Difficulty p_234948_1_) {
++      net.minecraftforge.common.ForgeHooks.onDifficultyChange(p_234948_1_, this.difficulty);
+       return new WorldSettings(this.levelName, this.gameType, this.hardcore, p_234948_1_, this.allowCommands, this.gameRules, this.dataPackConfig);
+    }
+ 

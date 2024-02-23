@@ -1,0 +1,11 @@
+--- a/net/minecraft/inventory/container/AbstractFurnaceContainer.java
++++ b/net/minecraft/inventory/container/AbstractFurnaceContainer.java
+@@ -150,7 +_,7 @@
+    }
+ 
+    protected boolean isFuel(ItemStack p_217058_1_) {
+-      return AbstractFurnaceTileEntity.isFuel(p_217058_1_);
++      return net.minecraftforge.common.ForgeHooks.getBurnTime(p_217058_1_, this.recipeType) > 0;
+    }
+ 
+    @OnlyIn(Dist.CLIENT)

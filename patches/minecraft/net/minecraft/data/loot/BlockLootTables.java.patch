@@ -1,0 +1,37 @@
+--- a/net/minecraft/data/loot/BlockLootTables.java
++++ b/net/minecraft/data/loot/BlockLootTables.java
+@@ -216,7 +_,7 @@
+       return LootTable.lootTable();
+    }
+ 
+-   public void accept(BiConsumer<ResourceLocation, LootTable.Builder> p_accept_1_) {
++   protected void addTables() {
+       this.dropSelf(Blocks.GRANITE);
+       this.dropSelf(Blocks.POLISHED_GRANITE);
+       this.dropSelf(Blocks.DIORITE);
+@@ -1066,9 +_,13 @@
+       this.add(Blocks.FIRE, noDrop());
+       this.add(Blocks.SOUL_FIRE, noDrop());
+       this.add(Blocks.NETHER_PORTAL, noDrop());
++   }
++
++   public void accept(BiConsumer<ResourceLocation, LootTable.Builder> p_accept_1_) {
++      this.addTables();
+       Set<ResourceLocation> set = Sets.newHashSet();
+ 
+-      for(Block block : Registry.BLOCK) {
++      for(Block block : getKnownBlocks()) {
+          ResourceLocation resourcelocation = block.getLootTable();
+          if (resourcelocation != LootTables.EMPTY && set.add(resourcelocation)) {
+             LootTable.Builder loottable$builder = this.map.remove(resourcelocation);
+@@ -1093,6 +_,10 @@
+ 
+    public static LootTable.Builder createDoorTable(Block p_239829_0_) {
+       return createSinglePropConditionTable(p_239829_0_, DoorBlock.HALF, DoubleBlockHalf.LOWER);
++   }
++
++   protected Iterable<Block> getKnownBlocks() {
++       return Registry.BLOCK;
+    }
+ 
+    public void dropPottedContents(Block p_218547_1_) {

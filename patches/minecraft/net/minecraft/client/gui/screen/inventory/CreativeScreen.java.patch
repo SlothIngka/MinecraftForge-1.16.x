@@ -1,0 +1,278 @@
+--- a/net/minecraft/client/gui/screen/inventory/CreativeScreen.java
++++ b/net/minecraft/client/gui/screen/inventory/CreativeScreen.java
+@@ -65,6 +_,8 @@
+    private Slot destroyItemSlot;
+    private CreativeCraftingListener listener;
+    private boolean ignoreTextInput;
++   private static int tabPage = 0;
++   private int maxPages = 0;
+    private boolean hasClickedOutside;
+    private final Map<ResourceLocation, ITag<Item>> visibleTags = Maps.newTreeMap();
+ 
+@@ -234,6 +_,12 @@
+    protected void init() {
+       if (this.minecraft.gameMode.hasInfiniteItems()) {
+          super.init();
++         int tabCount = ItemGroup.TABS.length;
++         if (tabCount > 12) {
++            addButton(new net.minecraft.client.gui.widget.button.Button(leftPos,              topPos - 50, 20, 20, new StringTextComponent("<"), b -> tabPage = Math.max(tabPage - 1, 0       )));
++            addButton(new net.minecraft.client.gui.widget.button.Button(leftPos + imageWidth - 20, topPos - 50, 20, 20, new StringTextComponent(">"), b -> tabPage = Math.min(tabPage + 1, maxPages)));
++            maxPages = (int) Math.ceil((tabCount - 12) / 10D);
++         }
+          this.minecraft.keyboardHandler.setSendRepeatsToGui(true);
+          this.searchBox = new TextFieldWidget(this.font, this.leftPos + 82, this.topPos + 6, 80, 9, new TranslationTextComponent("itemGroup.search"));
+          this.searchBox.setMaxLength(50);
+@@ -275,7 +_,7 @@
+    public boolean charTyped(char p_231042_1_, int p_231042_2_) {
+       if (this.ignoreTextInput) {
+          return false;
+-      } else if (selectedTab != ItemGroup.TAB_SEARCH.getId()) {
++      } else if (!ItemGroup.TABS[selectedTab].hasSearchBar()) {
+          return false;
+       } else {
+          String s = this.searchBox.getValue();
+@@ -293,7 +_,7 @@
+ 
+    public boolean keyPressed(int p_231046_1_, int p_231046_2_, int p_231046_3_) {
+       this.ignoreTextInput = false;
+-      if (selectedTab != ItemGroup.TAB_SEARCH.getId()) {
++      if (!ItemGroup.TABS[selectedTab].hasSearchBar()) {
+          if (this.minecraft.options.keyChat.matches(p_231046_1_, p_231046_2_)) {
+             this.ignoreTextInput = true;
+             this.selectTab(ItemGroup.TAB_SEARCH);
+@@ -330,6 +_,32 @@
+    private void refreshSearchResults() {
+       (this.menu).items.clear();
+       this.visibleTags.clear();
++
++      ItemGroup tab = ItemGroup.TABS[selectedTab];
++      if (tab.hasSearchBar() && tab != ItemGroup.TAB_SEARCH) {
++         tab.fillItemList(menu.items);
++         if (!this.searchBox.getValue().isEmpty()) {
++            //TODO: Make this a SearchTree not a manual search
++            String search = this.searchBox.getValue().toLowerCase(Locale.ROOT);
++            java.util.Iterator<ItemStack> itr = menu.items.iterator();
++            while (itr.hasNext()) {
++               ItemStack stack = itr.next();
++               boolean matches = false;
++               for (ITextComponent line : stack.getTooltipLines(this.minecraft.player, this.minecraft.options.advancedItemTooltips ? ITooltipFlag.TooltipFlags.ADVANCED : ITooltipFlag.TooltipFlags.NORMAL)) {
++                  if (TextFormatting.stripFormatting(line.getString()).toLowerCase(Locale.ROOT).contains(search)) {
++                     matches = true;
++                     break;
++                  }
++               }
++               if (!matches)
++                  itr.remove();
++            }
++         }
++         this.scrollOffs = 0.0F;
++         menu.scrollTo(0.0F);
++         return;
++      }
++
+       String s = this.searchBox.getValue();
+       if (s.isEmpty()) {
+          for(Item item : Registry.ITEM) {
+@@ -375,9 +_,9 @@
+ 
+    protected void renderLabels(MatrixStack p_230451_1_, int p_230451_2_, int p_230451_3_) {
+       ItemGroup itemgroup = ItemGroup.TABS[selectedTab];
+-      if (itemgroup.showTitle()) {
++      if (itemgroup != null && itemgroup.showTitle()) {
+          RenderSystem.disableBlend();
+-         this.font.draw(p_230451_1_, itemgroup.getDisplayName(), 8.0F, 6.0F, 4210752);
++         this.font.draw(p_230451_1_, itemgroup.getDisplayName(), 8.0F, 6.0F, itemgroup.getLabelColor());
+       }
+ 
+    }
+@@ -388,7 +_,7 @@
+          double d1 = p_231044_3_ - (double)this.topPos;
+ 
+          for(ItemGroup itemgroup : ItemGroup.TABS) {
+-            if (this.checkTabClicked(itemgroup, d0, d1)) {
++            if (itemgroup != null && this.checkTabClicked(itemgroup, d0, d1)) {
+                return true;
+             }
+          }
+@@ -409,7 +_,7 @@
+          this.scrolling = false;
+ 
+          for(ItemGroup itemgroup : ItemGroup.TABS) {
+-            if (this.checkTabClicked(itemgroup, d0, d1)) {
++            if (itemgroup != null && this.checkTabClicked(itemgroup, d0, d1)) {
+                this.selectTab(itemgroup);
+                return true;
+             }
+@@ -420,12 +_,15 @@
+    }
+ 
+    private boolean canScroll() {
++      if (ItemGroup.TABS[selectedTab] == null) return false;
+       return selectedTab != ItemGroup.TAB_INVENTORY.getId() && ItemGroup.TABS[selectedTab].canScroll() && this.menu.canScroll();
+    }
+ 
+    private void selectTab(ItemGroup p_147050_1_) {
++      if (p_147050_1_ == null) return;
+       int i = selectedTab;
+       selectedTab = p_147050_1_.getId();
++      slotColor = p_147050_1_.getSlotColor();
+       this.quickCraftSlots.clear();
+       (this.menu).items.clear();
+       if (p_147050_1_ == ItemGroup.TAB_HOTBAR) {
+@@ -502,13 +_,15 @@
+       }
+ 
+       if (this.searchBox != null) {
+-         if (p_147050_1_ == ItemGroup.TAB_SEARCH) {
++         if (p_147050_1_.hasSearchBar()) {
+             this.searchBox.setVisible(true);
+             this.searchBox.setCanLoseFocus(false);
+             this.searchBox.setFocus(true);
+             if (i != p_147050_1_.getId()) {
+                this.searchBox.setValue("");
+             }
++            this.searchBox.setWidth(p_147050_1_.getSearchbarWidth());
++            this.searchBox.x = this.leftPos + (82 /*default left*/ + 89 /*default width*/) - this.searchBox.getWidth();
+ 
+             this.refreshSearchResults();
+          } else {
+@@ -568,16 +_,35 @@
+       this.renderBackground(p_230430_1_);
+       super.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
+ 
+-      for(ItemGroup itemgroup : ItemGroup.TABS) {
+-         if (this.checkTabHovering(p_230430_1_, itemgroup, p_230430_2_, p_230430_3_)) {
++      int start = tabPage * 10;
++      int end = Math.min(ItemGroup.TABS.length, ((tabPage + 1) * 10) + 2);
++      if (tabPage != 0) start += 2;
++      boolean rendered = false;
++
++       for (int x = start; x < end; x++) {
++         ItemGroup itemgroup = ItemGroup.TABS[x];
++         if (itemgroup != null && this.checkTabHovering(p_230430_1_, itemgroup, p_230430_2_, p_230430_3_)) {
++            rendered = true;
+             break;
+          }
+       }
++      if (!rendered && !this.checkTabHovering(p_230430_1_, ItemGroup.TAB_SEARCH, p_230430_2_, p_230430_3_))
++         this.checkTabHovering(p_230430_1_, ItemGroup.TAB_INVENTORY, p_230430_2_, p_230430_3_);
+ 
+       if (this.destroyItemSlot != null && selectedTab == ItemGroup.TAB_INVENTORY.getId() && this.isHovering(this.destroyItemSlot.x, this.destroyItemSlot.y, 16, 16, (double)p_230430_2_, (double)p_230430_3_)) {
+          this.renderTooltip(p_230430_1_, TRASH_SLOT_TOOLTIP, p_230430_2_, p_230430_3_);
+       }
+ 
++      if (maxPages != 0) {
++          ITextComponent page = new StringTextComponent(String.format("%d / %d", tabPage + 1, maxPages + 1));
++          RenderSystem.disableLighting();
++          this.setBlitOffset(300);
++          this.itemRenderer.blitOffset = 300.0F;
++          font.drawShadow(p_230430_1_, page.getVisualOrderText(), leftPos + (imageWidth / 2) - (font.width(page) / 2), topPos - 44, -1);
++          this.setBlitOffset(0);
++          this.itemRenderer.blitOffset = 0.0F;
++      }
++
+       RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+       this.renderTooltip(p_230430_1_, p_230430_2_, p_230430_3_);
+    }
+@@ -612,7 +_,10 @@
+             list1.add(1, itemgroup.getDisplayName().copy().withStyle(TextFormatting.BLUE));
+          }
+ 
+-         this.renderComponentTooltip(p_230457_1_, list1, p_230457_3_, p_230457_4_);
++         net.minecraft.client.gui.FontRenderer font = p_230457_2_.getItem().getFontRenderer(p_230457_2_);
++         net.minecraftforge.fml.client.gui.GuiUtils.preItemToolTip(p_230457_2_);
++         this.renderWrappedToolTip(p_230457_1_, list1, p_230457_3_, p_230457_4_, (font == null ? this.font : font));
++         net.minecraftforge.fml.client.gui.GuiUtils.postItemToolTip();
+       } else {
+          super.renderTooltip(p_230457_1_, p_230457_2_, p_230457_3_, p_230457_4_);
+       }
+@@ -623,25 +_,44 @@
+       RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+       ItemGroup itemgroup = ItemGroup.TABS[selectedTab];
+ 
+-      for(ItemGroup itemgroup1 : ItemGroup.TABS) {
+-         this.minecraft.getTextureManager().bind(CREATIVE_TABS_LOCATION);
+-         if (itemgroup1.getId() != selectedTab) {
++      int start = tabPage * 10;
++      int end = Math.min(ItemGroup.TABS.length, ((tabPage + 1) * 10 + 2));
++      if (tabPage != 0) start += 2;
++
++      for (int idx = start; idx < end; idx++) {
++         ItemGroup itemgroup1 = ItemGroup.TABS[idx];
++         if (itemgroup1 != null && itemgroup1.getId() != selectedTab) {
++            this.minecraft.getTextureManager().bind(itemgroup1.getTabsImage());
+             this.renderTabButton(p_230450_1_, itemgroup1);
+          }
+       }
+ 
+-      this.minecraft.getTextureManager().bind(new ResourceLocation("textures/gui/container/creative_inventory/tab_" + itemgroup.getBackgroundSuffix()));
++      if (tabPage != 0) {
++         if (itemgroup != ItemGroup.TAB_SEARCH) {
++            this.minecraft.getTextureManager().bind(ItemGroup.TAB_SEARCH.getTabsImage());
++            renderTabButton(p_230450_1_, ItemGroup.TAB_SEARCH);
++         }
++         if (itemgroup != ItemGroup.TAB_INVENTORY) {
++            this.minecraft.getTextureManager().bind(ItemGroup.TAB_INVENTORY.getTabsImage());
++            renderTabButton(p_230450_1_, ItemGroup.TAB_INVENTORY);
++         }
++      }
++
++      this.minecraft.getTextureManager().bind(itemgroup.getBackgroundImage());
+       this.blit(p_230450_1_, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);
+       this.searchBox.render(p_230450_1_, p_230450_3_, p_230450_4_, p_230450_2_);
+       RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+       int i = this.leftPos + 175;
+       int j = this.topPos + 18;
+       int k = j + 112;
+-      this.minecraft.getTextureManager().bind(CREATIVE_TABS_LOCATION);
++      this.minecraft.getTextureManager().bind(itemgroup.getTabsImage());
+       if (itemgroup.canScroll()) {
+          this.blit(p_230450_1_, i, j + (int)((float)(k - j - 17) * this.scrollOffs), 232 + (this.canScroll() ? 0 : 12), 0, 12, 15);
+       }
+ 
++      if ((itemgroup == null || itemgroup.getTabPage() != tabPage) && (itemgroup != ItemGroup.TAB_SEARCH && itemgroup != ItemGroup.TAB_INVENTORY))
++         return;
++
+       this.renderTabButton(p_230450_1_, itemgroup);
+       if (itemgroup == ItemGroup.TAB_INVENTORY) {
+          InventoryScreen.renderEntityInInventory(this.leftPos + 88, this.topPos + 45, 20, (float)(this.leftPos + 88 - p_230450_3_), (float)(this.topPos + 45 - 30 - p_230450_4_), this.minecraft.player);
+@@ -650,6 +_,7 @@
+    }
+ 
+    protected boolean checkTabClicked(ItemGroup p_195375_1_, double p_195375_2_, double p_195375_4_) {
++      if (p_195375_1_.getTabPage() != tabPage && p_195375_1_ != ItemGroup.TAB_SEARCH && p_195375_1_ != ItemGroup.TAB_INVENTORY) return false;
+       int i = p_195375_1_.getColumn();
+       int j = 28 * i;
+       int k = 0;
+@@ -718,6 +_,8 @@
+          i1 = i1 + (this.imageHeight - 4);
+       }
+ 
++      RenderSystem.color3f(1F, 1F, 1F); //Forge: Reset color in case Items change it.
++      RenderSystem.enableBlend(); //Forge: Make sure blend is enabled else tabs show a white border.
+       this.blit(p_238808_1_, l, i1, j, k, 28, 32);
+       this.itemRenderer.blitOffset = 100.0F;
+       l = l + 6;
+@@ -883,6 +_,22 @@
+ 
+       public boolean mayPickup(PlayerEntity p_82869_1_) {
+          return this.target.mayPickup(p_82869_1_);
++      }
++
++      @Override
++      public int getSlotIndex() {
++         return this.target.getSlotIndex();
++      }
++
++      @Override
++      public boolean isSameInventory(Slot other) {
++         return this.target.isSameInventory(other);
++      }
++
++      @Override
++      public Slot setBackground(ResourceLocation atlas, ResourceLocation sprite) {
++         this.target.setBackground(atlas, sprite);
++         return this;
+       }
+    }
+ 

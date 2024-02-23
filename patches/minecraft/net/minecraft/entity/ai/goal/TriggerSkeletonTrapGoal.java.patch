@@ -1,0 +1,22 @@
+--- a/net/minecraft/entity/ai/goal/TriggerSkeletonTrapGoal.java
++++ b/net/minecraft/entity/ai/goal/TriggerSkeletonTrapGoal.java
+@@ -28,6 +_,10 @@
+ 
+    public void tick() {
+       ServerWorld serverworld = (ServerWorld)this.horse.level;
++      // Forge: Trigger the trap in a tick task to avoid crashes when mods add goals to skeleton horses
++      // (MC-206338/Forge PR #7509)
++      serverworld.getServer().tell(new net.minecraft.util.concurrent.TickDelayedTask(serverworld.getServer().getTickCount(), () -> {
++      if (!this.horse.isAlive()) return;
+       DifficultyInstance difficultyinstance = serverworld.getCurrentDifficultyAt(this.horse.blockPosition());
+       this.horse.setTrap(false);
+       this.horse.setTamed(true);
+@@ -47,7 +_,7 @@
+          abstracthorseentity.push(this.horse.getRandom().nextGaussian() * 0.5D, 0.0D, this.horse.getRandom().nextGaussian() * 0.5D);
+          serverworld.addFreshEntityWithPassengers(abstracthorseentity);
+       }
+-
++      }));
+    }
+ 
+    private AbstractHorseEntity createHorse(DifficultyInstance p_188515_1_) {

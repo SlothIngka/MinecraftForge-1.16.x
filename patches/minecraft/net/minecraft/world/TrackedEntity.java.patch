@@ -1,0 +1,29 @@
+--- a/net/minecraft/world/TrackedEntity.java
++++ b/net/minecraft/world/TrackedEntity.java
+@@ -81,9 +_,8 @@
+       if (this.entity instanceof ItemFrameEntity && this.tickCount % 10 == 0) {
+          ItemFrameEntity itemframeentity = (ItemFrameEntity)this.entity;
+          ItemStack itemstack = itemframeentity.getItem();
+-         if (itemstack.getItem() instanceof FilledMapItem) {
+-            MapData mapdata = FilledMapItem.getOrCreateSavedData(itemstack, this.level);
+-
++         MapData mapdata = FilledMapItem.getOrCreateSavedData(itemstack, this.level);
++         if (mapdata != null) {
+             for(ServerPlayerEntity serverplayerentity : this.level.players()) {
+                mapdata.tickCarriedBy(serverplayerentity, itemstack);
+                IPacket<?> ipacket = ((FilledMapItem)itemstack.getItem()).getUpdatePacket(itemstack, this.level, serverplayerentity);
+@@ -187,12 +_,14 @@
+    public void removePairing(ServerPlayerEntity p_219454_1_) {
+       this.entity.stopSeenByPlayer(p_219454_1_);
+       p_219454_1_.sendRemoveEntity(this.entity);
++      net.minecraftforge.event.ForgeEventFactory.onStopEntityTracking(this.entity, p_219454_1_);
+    }
+ 
+    public void addPairing(ServerPlayerEntity p_219455_1_) {
+       this.sendPairingData(p_219455_1_.connection::send);
+       this.entity.startSeenByPlayer(p_219455_1_);
+       p_219455_1_.cancelRemoveEntity(this.entity);
++      net.minecraftforge.event.ForgeEventFactory.onStartEntityTracking(this.entity, p_219455_1_);
+    }
+ 
+    public void sendPairingData(Consumer<IPacket<?>> p_219452_1_) {

@@ -1,0 +1,20 @@
+--- a/net/minecraft/item/MerchantOffer.java
++++ b/net/minecraft/item/MerchantOffer.java
+@@ -74,7 +_,7 @@
+       int i = this.baseCostA.getCount();
+       ItemStack itemstack = this.baseCostA.copy();
+       int j = Math.max(0, MathHelper.floor((float)(i * this.demand) * this.priceMultiplier));
+-      itemstack.setCount(MathHelper.clamp(i + j + this.specialPriceDiff, 1, this.baseCostA.getItem().getMaxStackSize()));
++      itemstack.setCount(MathHelper.clamp(i + j + this.specialPriceDiff, 1, this.baseCostA.getMaxStackSize()));
+       return itemstack;
+    }
+ 
+@@ -178,7 +_,7 @@
+          return true;
+       } else {
+          ItemStack itemstack = p_222201_1_.copy();
+-         if (itemstack.getItem().canBeDepleted()) {
++         if (itemstack.getItem().isDamageable(itemstack)) {
+             itemstack.setDamageValue(itemstack.getDamageValue());
+          }
+ 

@@ -1,0 +1,33 @@
+--- a/net/minecraft/entity/ai/attributes/AttributeModifierMap.java
++++ b/net/minecraft/entity/ai/attributes/AttributeModifierMap.java
+@@ -69,6 +_,22 @@
+    public static class MutableAttribute {
+       private final Map<Attribute, ModifiableAttributeInstance> builder = Maps.newHashMap();
+       private boolean instanceFrozen;
++      private final java.util.List<AttributeModifierMap.MutableAttribute> others = new java.util.ArrayList<>();
++
++      public MutableAttribute() { }
++
++      public MutableAttribute(AttributeModifierMap attributeMap) {
++         this.builder.putAll(attributeMap.instances);
++      }
++
++      public void combine(MutableAttribute other) {
++         this.builder.putAll(other.builder);
++         others.add(other);
++      }
++
++      public boolean hasAttribute(Attribute attribute) {
++         return this.builder.containsKey(attribute);
++      }
+ 
+       private ModifiableAttributeInstance create(Attribute p_233817_1_) {
+          ModifiableAttributeInstance modifiableattributeinstance = new ModifiableAttributeInstance(p_233817_1_, (p_233816_2_) -> {
+@@ -93,6 +_,7 @@
+ 
+       public AttributeModifierMap build() {
+          this.instanceFrozen = true;
++         others.forEach(o -> o.instanceFrozen = true);
+          return new AttributeModifierMap(this.builder);
+       }
+    }

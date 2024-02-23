@@ -1,0 +1,30 @@
+--- a/net/minecraft/advancements/PlayerAdvancements.java
++++ b/net/minecraft/advancements/PlayerAdvancements.java
+@@ -159,6 +_,10 @@
+       }
+ 
+       this.checkForAutomaticTriggers(p_240921_1_);
++
++      if (net.minecraftforge.common.ForgeConfig.SERVER.fixAdvancementLoading.get())
++         net.minecraftforge.common.AdvancementLoadFix.loadVisibility(this, this.visible, this.visibilityChanged, this.advancements, this.progressChanged, this::shouldBeVisible);
++      else
+       this.ensureAllVisible();
+       this.registerListeners(p_240921_1_);
+    }
+@@ -192,6 +_,8 @@
+    }
+ 
+    public boolean award(Advancement p_192750_1_, String p_192750_2_) {
++      // Forge: don't grant advancements for fake players
++      if (this.player instanceof net.minecraftforge.common.util.FakePlayer) return false;
+       boolean flag = false;
+       AdvancementProgress advancementprogress = this.getOrStartProgress(p_192750_1_);
+       boolean flag1 = advancementprogress.isDone();
+@@ -204,6 +_,7 @@
+             if (p_192750_1_.getDisplay() != null && p_192750_1_.getDisplay().shouldAnnounceChat() && this.player.level.getGameRules().getBoolean(GameRules.RULE_ANNOUNCE_ADVANCEMENTS)) {
+                this.playerList.broadcastMessage(new TranslationTextComponent("chat.type.advancement." + p_192750_1_.getDisplay().getFrame().getName(), this.player.getDisplayName(), p_192750_1_.getChatComponent()), ChatType.SYSTEM, Util.NIL_UUID);
+             }
++            net.minecraftforge.common.ForgeHooks.onAdvancement(this.player, p_192750_1_);
+          }
+       }
+ 

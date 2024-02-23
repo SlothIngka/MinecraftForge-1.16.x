@@ -1,0 +1,11 @@
+--- a/net/minecraft/entity/passive/ParrotEntity.java
++++ b/net/minecraft/entity/passive/ParrotEntity.java
+@@ -237,7 +_,7 @@
+          }
+ 
+          if (!this.level.isClientSide) {
+-            if (this.random.nextInt(10) == 0) {
++            if (this.random.nextInt(10) == 0 && !net.minecraftforge.event.ForgeEventFactory.onAnimalTame(this, p_230254_1_)) {
+                this.tame(p_230254_1_);
+                this.level.broadcastEntityEvent(this, (byte)7);
+             } else {

@@ -1,0 +1,107 @@
+--- a/net/minecraft/client/renderer/model/ModelBakery.java
++++ b/net/minecraft/client/renderer/model/ModelBakery.java
+@@ -146,8 +_,17 @@
+    });
+ 
+    public ModelBakery(IResourceManager p_i226056_1_, BlockColors p_i226056_2_, IProfiler p_i226056_3_, int p_i226056_4_) {
++      this(p_i226056_1_, p_i226056_2_, true);
++      processLoading(p_i226056_3_, p_i226056_4_);
++   }
++
++   protected ModelBakery(IResourceManager p_i226056_1_, BlockColors p_i226056_2_, boolean vanillaBakery) {
+       this.resourceManager = p_i226056_1_;
+       this.blockColors = p_i226056_2_;
++   }
++
++   protected void processLoading(IProfiler p_i226056_3_, int p_i226056_4_) {
++      net.minecraftforge.client.model.ModelLoaderRegistry.onModelLoadingStart();
+       p_i226056_3_.push("missing_model");
+ 
+       try {
+@@ -180,12 +_,16 @@
+ 
+       p_i226056_3_.popPush("special");
+       this.loadTopLevel(new ModelResourceLocation("minecraft:trident_in_hand#inventory"));
++      for (ResourceLocation rl : getSpecialModels()) {
++         addModelToCache(rl);
++      }
+       p_i226056_3_.popPush("textures");
+       Set<Pair<String, String>> set = Sets.newLinkedHashSet();
+       Set<RenderMaterial> set1 = this.topLevelModels.values().stream().flatMap((p_229342_2_) -> {
+          return p_229342_2_.getMaterials(this::getModel, set).stream();
+       }).collect(Collectors.toSet());
+       set1.addAll(UNREFERENCED_TEXTURES);
++      net.minecraftforge.client.ForgeHooksClient.gatherFluidTextures(set1);
+       set.stream().filter((p_229346_0_) -> {
+          return !p_229346_0_.getSecond().equals(MISSING_MODEL_LOCATION_STRING);
+       }).forEach((p_229330_0_) -> {
+@@ -224,6 +_,7 @@
+          try {
+             ibakedmodel = this.bake(p_229350_1_, ModelRotation.X0_Y0);
+          } catch (Exception exception) {
++            exception.printStackTrace();
+             LOGGER.warn("Unable to bake model: '{}': {}", p_229350_1_, exception);
+          }
+ 
+@@ -442,6 +_,13 @@
+       this.loadingStack.addAll(p_209593_2_.getDependencies());
+    }
+ 
++   // Same as loadTopModel but without restricting to MRL's
++   private void addModelToCache(ResourceLocation p_217843_1_) {
++      IUnbakedModel iunbakedmodel = this.getModel(p_217843_1_);
++      this.unbakedCache.put(p_217843_1_, iunbakedmodel);
++      this.topLevelModels.put(p_217843_1_, iunbakedmodel);
++   }
++
+    private void loadTopLevel(ModelResourceLocation p_217843_1_) {
+       IUnbakedModel iunbakedmodel = this.getModel(p_217843_1_);
+       this.unbakedCache.put(p_217843_1_, iunbakedmodel);
+@@ -456,7 +_,13 @@
+    }
+ 
+    @Nullable
++   @Deprecated
+    public IBakedModel bake(ResourceLocation p_217845_1_, IModelTransform p_217845_2_) {
++      return getBakedModel(p_217845_1_, p_217845_2_, this.atlasSet::getSprite);
++   }
++
++   @Nullable
++   public IBakedModel getBakedModel(ResourceLocation p_217845_1_, IModelTransform p_217845_2_, java.util.function.Function<RenderMaterial, net.minecraft.client.renderer.texture.TextureAtlasSprite> textureGetter) {
+       Triple<ResourceLocation, TransformationMatrix, Boolean> triple = Triple.of(p_217845_1_, p_217845_2_.getRotation(), p_217845_2_.isUvLocked());
+       if (this.bakedCache.containsKey(triple)) {
+          return this.bakedCache.get(triple);
+@@ -467,11 +_,11 @@
+          if (iunbakedmodel instanceof BlockModel) {
+             BlockModel blockmodel = (BlockModel)iunbakedmodel;
+             if (blockmodel.getRootModel() == GENERATION_MARKER) {
+-               return ITEM_MODEL_GENERATOR.generateBlockModel(this.atlasSet::getSprite, blockmodel).bake(this, blockmodel, this.atlasSet::getSprite, p_217845_2_, p_217845_1_, false);
++               return ITEM_MODEL_GENERATOR.generateBlockModel(textureGetter, blockmodel).bake(this, blockmodel, this.atlasSet::getSprite, p_217845_2_, p_217845_1_, false);
+             }
+          }
+ 
+-         IBakedModel ibakedmodel = iunbakedmodel.bake(this, this.atlasSet::getSprite, p_217845_2_, p_217845_1_);
++         IBakedModel ibakedmodel = iunbakedmodel.bake(this, textureGetter, p_217845_2_, p_217845_1_);
+          this.bakedCache.put(triple, ibakedmodel);
+          return ibakedmodel;
+       }
+@@ -524,11 +_,19 @@
+       return this.modelGroups;
+    }
+ 
++   public Set<ResourceLocation> getSpecialModels() {
++      return java.util.Collections.emptySet();
++   }
++
+    @OnlyIn(Dist.CLIENT)
+    static class BlockStateDefinitionException extends RuntimeException {
+       public BlockStateDefinitionException(String p_i49526_1_) {
+          super(p_i49526_1_);
+       }
++   }
++
++   public SpriteMap getSpriteMap() {
++      return this.atlasSet;
+    }
+ 
+    @OnlyIn(Dist.CLIENT)

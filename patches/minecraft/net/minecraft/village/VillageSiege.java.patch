@@ -1,0 +1,22 @@
+--- a/net/minecraft/village/VillageSiege.java
++++ b/net/minecraft/village/VillageSiege.java
+@@ -78,7 +_,9 @@
+                   this.spawnX = blockpos.getX() + MathHelper.floor(MathHelper.cos(f) * 32.0F);
+                   this.spawnY = blockpos.getY();
+                   this.spawnZ = blockpos.getZ() + MathHelper.floor(MathHelper.sin(f) * 32.0F);
+-                  if (this.findRandomSpawnPos(p_75529_1_, new BlockPos(this.spawnX, this.spawnY, this.spawnZ)) != null) {
++                  Vector3d siegeLocation = this.findRandomSpawnPos(p_75529_1_, new BlockPos(this.spawnX, this.spawnY, this.spawnZ));
++                  if (siegeLocation != null) {
++                     if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.village.VillageSiegeEvent(this, p_75529_1_, playerentity, siegeLocation))) return false;
+                      this.nextSpawnTime = 0;
+                      this.zombiesToSpawn = 20;
+                      break;
+@@ -98,7 +_,7 @@
+       if (vector3d != null) {
+          ZombieEntity zombieentity;
+          try {
+-            zombieentity = new ZombieEntity(p_75530_1_);
++            zombieentity = EntityType.ZOMBIE.create(p_75530_1_); //Forge: Direct Initialization is deprecated, use EntityType.
+             zombieentity.finalizeSpawn(p_75530_1_, p_75530_1_.getCurrentDifficultyAt(zombieentity.blockPosition()), SpawnReason.EVENT, (ILivingEntityData)null, (CompoundNBT)null);
+          } catch (Exception exception) {
+             LOGGER.warn("Failed to create zombie for village siege at {}", vector3d, exception);

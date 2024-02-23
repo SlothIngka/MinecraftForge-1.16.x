@@ -1,0 +1,18 @@
+--- a/net/minecraft/resources/DataPackRegistries.java
++++ b/net/minecraft/resources/DataPackRegistries.java
+@@ -32,6 +_,7 @@
+       this.resources.registerReloadListener(this.lootTables);
+       this.resources.registerReloadListener(this.functionLibrary);
+       this.resources.registerReloadListener(this.advancements);
++      net.minecraftforge.event.ForgeEventFactory.onResourceReload(this).forEach(resources::registerReloadListener);
+    }
+ 
+    public FunctionReloader getFunctionLibrary() {
+@@ -81,6 +_,7 @@
+ 
+    public void updateGlobals() {
+       this.tagManager.getTags().bindToGlobal();
++      net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.TagsUpdatedEvent.CustomTagTypes(tagManager.getTags()));
+    }
+ 
+    public void close() {

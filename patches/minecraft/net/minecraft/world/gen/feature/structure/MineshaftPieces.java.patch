@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/gen/feature/structure/MineshaftPieces.java
++++ b/net/minecraft/world/gen/feature/structure/MineshaftPieces.java
+@@ -207,7 +_,7 @@
+ 
+       protected boolean createChest(ISeedReader p_186167_1_, MutableBoundingBox p_186167_2_, Random p_186167_3_, int p_186167_4_, int p_186167_5_, int p_186167_6_, ResourceLocation p_186167_7_) {
+          BlockPos blockpos = new BlockPos(this.getWorldX(p_186167_4_, p_186167_6_), this.getWorldY(p_186167_5_), this.getWorldZ(p_186167_4_, p_186167_6_));
+-         if (p_186167_2_.isInside(blockpos) && p_186167_1_.getBlockState(blockpos).isAir() && !p_186167_1_.getBlockState(blockpos.below()).isAir()) {
++         if (p_186167_2_.isInside(blockpos) && p_186167_1_.getBlockState(blockpos).isAir(p_186167_1_, blockpos) && !p_186167_1_.getBlockState(blockpos.below()).isAir(p_186167_1_, blockpos.below())) {
+             BlockState blockstate = Blocks.RAIL.defaultBlockState().setValue(RailBlock.SHAPE, p_186167_3_.nextBoolean() ? RailShape.NORTH_SOUTH : RailShape.EAST_WEST);
+             this.placeBlock(p_186167_1_, blockstate, p_186167_4_, p_186167_5_, p_186167_6_, p_186167_2_);
+             ChestMinecartEntity chestminecartentity = new ChestMinecartEntity(p_186167_1_.getLevel(), (double)blockpos.getX() + 0.5D, (double)blockpos.getY() + 0.5D, (double)blockpos.getZ() + 0.5D);

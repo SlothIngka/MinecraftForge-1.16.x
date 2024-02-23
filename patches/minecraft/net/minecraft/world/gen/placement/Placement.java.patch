@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/gen/placement/Placement.java
++++ b/net/minecraft/world/gen/placement/Placement.java
+@@ -8,7 +_,7 @@
+ import net.minecraft.world.gen.feature.FeatureSpreadConfig;
+ import net.minecraft.world.gen.feature.WorldDecoratingHelper;
+ 
+-public abstract class Placement<DC extends IPlacementConfig> {
++public abstract class Placement<DC extends IPlacementConfig> extends net.minecraftforge.registries.ForgeRegistryEntry<Placement<?>> {
+    public static final Placement<NoPlacementConfig> NOPE = register("nope", new Passthrough(NoPlacementConfig.CODEC));
+    public static final Placement<ChanceConfig> CHANCE = register("chance", new ChancePlacement(ChanceConfig.CODEC));
+    public static final Placement<FeatureSpreadConfig> COUNT = register("count", new CountPlacement(FeatureSpreadConfig.CODEC));

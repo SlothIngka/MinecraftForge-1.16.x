@@ -1,0 +1,10 @@
+--- a/net/minecraft/client/network/ServerPinger.java
++++ b/net/minecraft/client/network/ServerPinger.java
+@@ -116,6 +_,7 @@
+                   p_147224_2_.run();
+                }
+ 
++               net.minecraftforge.fml.client.ClientHooks.processForgeListPingData(serverstatusresponse, p_147224_1_);
+                this.pingStart = Util.getMillis();
+                networkmanager.send(new CPingPacket(this.pingStart));
+                this.success = true;

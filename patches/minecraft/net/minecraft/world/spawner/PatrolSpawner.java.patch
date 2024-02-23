@@ -1,0 +1,10 @@
+--- a/net/minecraft/world/spawner/PatrolSpawner.java
++++ b/net/minecraft/world/spawner/PatrolSpawner.java
+@@ -101,6 +_,7 @@
+             }
+ 
+             patrollerentity.setPos((double)p_222695_2_.getX(), (double)p_222695_2_.getY(), (double)p_222695_2_.getZ());
++            if(net.minecraftforge.common.ForgeHooks.canEntitySpawn(patrollerentity, p_222695_1_, p_222695_2_.getX(), p_222695_2_.getY(), p_222695_2_.getZ(), null, SpawnReason.PATROL) == -1) return false;
+             patrollerentity.finalizeSpawn(p_222695_1_, p_222695_1_.getCurrentDifficultyAt(p_222695_2_), SpawnReason.PATROL, (ILivingEntityData)null, (CompoundNBT)null);
+             p_222695_1_.addFreshEntityWithPassengers(patrollerentity);
+             return true;

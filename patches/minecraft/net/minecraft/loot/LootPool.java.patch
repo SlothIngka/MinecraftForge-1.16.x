@@ -1,0 +1,119 @@
+--- a/net/minecraft/loot/LootPool.java
++++ b/net/minecraft/loot/LootPool.java
+@@ -25,17 +_,19 @@
+ import org.apache.commons.lang3.mutable.MutableInt;
+ 
+ public class LootPool {
+-   private final LootEntry[] entries;
+-   private final ILootCondition[] conditions;
++   private final String name;
++   private final List<LootEntry> entries;
++   private final List<ILootCondition> conditions;
+    private final Predicate<LootContext> compositeCondition;
+    private final ILootFunction[] functions;
+    private final BiFunction<ItemStack, LootContext, ItemStack> compositeFunction;
+    private IRandomRange rolls;
+    private RandomValueRange bonusRolls;
+ 
+-   private LootPool(LootEntry[] p_i51268_1_, ILootCondition[] p_i51268_2_, ILootFunction[] p_i51268_3_, IRandomRange p_i51268_4_, RandomValueRange p_i51268_5_) {
+-      this.entries = p_i51268_1_;
+-      this.conditions = p_i51268_2_;
++   private LootPool(LootEntry[] p_i51268_1_, ILootCondition[] p_i51268_2_, ILootFunction[] p_i51268_3_, IRandomRange p_i51268_4_, RandomValueRange p_i51268_5_, String name) {
++      this.name = name;
++      this.entries = Lists.newArrayList(p_i51268_1_);
++      this.conditions = Lists.newArrayList(p_i51268_2_);
+       this.compositeCondition = LootConditionManager.andConditions(p_i51268_2_);
+       this.functions = p_i51268_3_;
+       this.compositeFunction = LootFunctionManager.compose(p_i51268_3_);
+@@ -92,19 +_,33 @@
+    }
+ 
+    public void validate(ValidationTracker p_227505_1_) {
+-      for(int i = 0; i < this.conditions.length; ++i) {
+-         this.conditions[i].validate(p_227505_1_.forChild(".condition[" + i + "]"));
++      for(int i = 0; i < this.conditions.size(); ++i) {
++         this.conditions.get(i).validate(p_227505_1_.forChild(".condition[" + i + "]"));
+       }
+ 
+       for(int j = 0; j < this.functions.length; ++j) {
+          this.functions[j].validate(p_227505_1_.forChild(".functions[" + j + "]"));
+       }
+ 
+-      for(int k = 0; k < this.entries.length; ++k) {
+-         this.entries[k].validate(p_227505_1_.forChild(".entries[" + k + "]"));
++      for(int k = 0; k < this.entries.size(); ++k) {
++         this.entries.get(k).validate(p_227505_1_.forChild(".entries[" + k + "]"));
+       }
+ 
+    }
++   //======================== FORGE START =============================================
++   private boolean isFrozen = false;
++   public void freeze() { this.isFrozen = true; }
++   public boolean isFrozen(){ return this.isFrozen; }
++   private void checkFrozen() {
++      if (this.isFrozen())
++         throw new RuntimeException("Attempted to modify LootPool after being frozen!");
++   }
++   public String getName(){ return this.name; }
++   public IRandomRange getRolls()      { return this.rolls; }
++   public IRandomRange getBonusRolls() { return this.bonusRolls; }
++   public void setRolls     (RandomValueRange v){ checkFrozen(); this.rolls = v; }
++   public void setBonusRolls(RandomValueRange v){ checkFrozen(); this.bonusRolls = v; }
++   //======================== FORGE END ===============================================
+ 
+    public static LootPool.Builder lootPool() {
+       return new LootPool.Builder();
+@@ -116,6 +_,7 @@
+       private final List<ILootFunction> functions = Lists.newArrayList();
+       private IRandomRange rolls = new RandomValueRange(1.0F);
+       private RandomValueRange bonusRolls = new RandomValueRange(0.0F, 0.0F);
++      private String name;
+ 
+       public LootPool.Builder setRolls(IRandomRange p_216046_1_) {
+          this.rolls = p_216046_1_;
+@@ -141,11 +_,21 @@
+          return this;
+       }
+ 
++      public LootPool.Builder name(String name) {
++         this.name = name;
++         return this;
++      }
++
++      public LootPool.Builder bonusRolls(float min, float max) {
++         this.bonusRolls = new RandomValueRange(min, max);
++         return this;
++      }
++
+       public LootPool build() {
+          if (this.rolls == null) {
+             throw new IllegalArgumentException("Rolls not set");
+          } else {
+-            return new LootPool(this.entries.toArray(new LootEntry[0]), this.conditions.toArray(new ILootCondition[0]), this.functions.toArray(new ILootFunction[0]), this.rolls, this.bonusRolls);
++            return new LootPool(this.entries.toArray(new LootEntry[0]), this.conditions.toArray(new ILootCondition[0]), this.functions.toArray(new ILootFunction[0]), this.rolls, this.bonusRolls, name);
+          }
+       }
+    }
+@@ -158,18 +_,20 @@
+          ILootFunction[] ailootfunction = JSONUtils.getAsObject(jsonobject, "functions", new ILootFunction[0], p_deserialize_3_, ILootFunction[].class);
+          IRandomRange irandomrange = RandomRanges.deserialize(jsonobject.get("rolls"), p_deserialize_3_);
+          RandomValueRange randomvaluerange = JSONUtils.getAsObject(jsonobject, "bonus_rolls", new RandomValueRange(0.0F, 0.0F), p_deserialize_3_, RandomValueRange.class);
+-         return new LootPool(alootentry, ailootcondition, ailootfunction, irandomrange, randomvaluerange);
++         return new LootPool(alootentry, ailootcondition, ailootfunction, irandomrange, randomvaluerange, net.minecraftforge.common.ForgeHooks.readPoolName(jsonobject));
+       }
+ 
+       public JsonElement serialize(LootPool p_serialize_1_, Type p_serialize_2_, JsonSerializationContext p_serialize_3_) {
+          JsonObject jsonobject = new JsonObject();
++         if (p_serialize_1_.name != null && !p_serialize_1_.name.startsWith("custom#"))
++            jsonobject.add("name", p_serialize_3_.serialize(p_serialize_1_.name));
+          jsonobject.add("rolls", RandomRanges.serialize(p_serialize_1_.rolls, p_serialize_3_));
+          jsonobject.add("entries", p_serialize_3_.serialize(p_serialize_1_.entries));
+          if (p_serialize_1_.bonusRolls.getMin() != 0.0F && p_serialize_1_.bonusRolls.getMax() != 0.0F) {
+             jsonobject.add("bonus_rolls", p_serialize_3_.serialize(p_serialize_1_.bonusRolls));
+          }
+ 
+-         if (!ArrayUtils.isEmpty((Object[])p_serialize_1_.conditions)) {
++         if (!p_serialize_1_.conditions.isEmpty()) {
+             jsonobject.add("conditions", p_serialize_3_.serialize(p_serialize_1_.conditions));
+          }
+ 

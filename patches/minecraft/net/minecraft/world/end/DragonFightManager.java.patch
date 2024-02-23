@@ -1,0 +1,33 @@
+--- a/net/minecraft/world/end/DragonFightManager.java
++++ b/net/minecraft/world/end/DragonFightManager.java
+@@ -84,6 +_,7 @@
+ 
+          this.dragonKilled = p_i231901_4_.getBoolean("DragonKilled");
+          this.previouslyKilled = p_i231901_4_.getBoolean("PreviouslyKilled");
++         this.needsStateScanning = !p_i231901_4_.getBoolean("LegacyScanPerformed"); // Forge: fix MC-105080
+          if (p_i231901_4_.getBoolean("IsRespawning")) {
+             this.respawnStage = DragonSpawnState.START;
+          }
+@@ -118,6 +_,7 @@
+ 
+       compoundnbt.putBoolean("DragonKilled", this.dragonKilled);
+       compoundnbt.putBoolean("PreviouslyKilled", this.previouslyKilled);
++      compoundnbt.putBoolean("LegacyScanPerformed", !this.needsStateScanning); // Forge: fix MC-105080
+       if (this.portalLocation != null) {
+          compoundnbt.put("ExitPortalLocation", NBTUtil.writeBlockPos(this.portalLocation));
+       }
+@@ -490,6 +_,13 @@
+             endercrystalentity.setBeamTarget((BlockPos)null);
+          }
+       }
+-
++   }
++
++   public void addPlayer(ServerPlayerEntity player) {
++      this.dragonEvent.addPlayer(player);
++   }
++
++   public void removePlayer(ServerPlayerEntity player) {
++      this.dragonEvent.removePlayer(player);
+    }
+ }

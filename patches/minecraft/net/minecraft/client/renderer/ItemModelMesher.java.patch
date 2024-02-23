@@ -1,0 +1,12 @@
+--- a/net/minecraft/client/renderer/ItemModelMesher.java
++++ b/net/minecraft/client/renderer/ItemModelMesher.java
+@@ -31,7 +_,8 @@
+ 
+    public TextureAtlasSprite getParticleIcon(ItemStack p_199309_1_) {
+       IBakedModel ibakedmodel = this.getItemModel(p_199309_1_);
+-      return ibakedmodel == this.modelManager.getMissingModel() && p_199309_1_.getItem() instanceof BlockItem ? this.modelManager.getBlockModelShaper().getParticleIcon(((BlockItem)p_199309_1_.getItem()).getBlock().defaultBlockState()) : ibakedmodel.getParticleIcon();
++      // FORGE: Make sure to call the item overrides
++      return ibakedmodel == this.modelManager.getMissingModel() && p_199309_1_.getItem() instanceof BlockItem ? this.modelManager.getBlockModelShaper().getParticleIcon(((BlockItem)p_199309_1_.getItem()).getBlock().defaultBlockState()) : ibakedmodel.getOverrides().resolve(ibakedmodel, p_199309_1_, null, null).getParticleTexture(net.minecraftforge.client.model.data.EmptyModelData.INSTANCE);
+    }
+ 
+    public IBakedModel getItemModel(ItemStack p_178089_1_) {

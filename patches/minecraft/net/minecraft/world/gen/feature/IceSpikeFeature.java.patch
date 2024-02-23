@@ -1,0 +1,28 @@
+--- a/net/minecraft/world/gen/feature/IceSpikeFeature.java
++++ b/net/minecraft/world/gen/feature/IceSpikeFeature.java
+@@ -42,14 +_,14 @@
+                   if ((i1 == 0 && j1 == 0 || !(f1 * f1 + f2 * f2 > f * f)) && (i1 != -l && i1 != l && j1 != -l && j1 != l || !(p_241855_3_.nextFloat() > 0.75F))) {
+                      BlockState blockstate = p_241855_1_.getBlockState(p_241855_4_.offset(i1, k, j1));
+                      Block block = blockstate.getBlock();
+-                     if (blockstate.isAir() || isDirt(block) || block == Blocks.SNOW_BLOCK || block == Blocks.ICE) {
++                     if (blockstate.isAir(p_241855_1_, p_241855_4_.offset(i1, k, j1)) || isDirt(block) || block == Blocks.SNOW_BLOCK || block == Blocks.ICE) {
+                         this.setBlock(p_241855_1_, p_241855_4_.offset(i1, k, j1), Blocks.PACKED_ICE.defaultBlockState());
+                      }
+ 
+                      if (k != 0 && l > 1) {
+                         blockstate = p_241855_1_.getBlockState(p_241855_4_.offset(i1, -k, j1));
+                         block = blockstate.getBlock();
+-                        if (blockstate.isAir() || isDirt(block) || block == Blocks.SNOW_BLOCK || block == Blocks.ICE) {
++                        if (blockstate.isAir(p_241855_1_, p_241855_4_.offset(i1, -k, j1)) || isDirt(block) || block == Blocks.SNOW_BLOCK || block == Blocks.ICE) {
+                            this.setBlock(p_241855_1_, p_241855_4_.offset(i1, -k, j1), Blocks.PACKED_ICE.defaultBlockState());
+                         }
+                      }
+@@ -76,7 +_,7 @@
+                while(blockpos.getY() > 50) {
+                   BlockState blockstate1 = p_241855_1_.getBlockState(blockpos);
+                   Block block1 = blockstate1.getBlock();
+-                  if (!blockstate1.isAir() && !isDirt(block1) && block1 != Blocks.SNOW_BLOCK && block1 != Blocks.ICE && block1 != Blocks.PACKED_ICE) {
++                  if (!blockstate1.isAir(p_241855_1_, blockpos) && !isDirt(block1) && block1 != Blocks.SNOW_BLOCK && block1 != Blocks.ICE && block1 != Blocks.PACKED_ICE) {
+                      break;
+                   }
+ 

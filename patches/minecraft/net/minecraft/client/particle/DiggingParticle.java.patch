@@ -1,0 +1,25 @@
+--- a/net/minecraft/client/particle/DiggingParticle.java
++++ b/net/minecraft/client/particle/DiggingParticle.java
+@@ -36,6 +_,7 @@
+    }
+ 
+    public DiggingParticle init(BlockPos p_174846_1_) {
++      updateSprite(p_174846_1_);
+       this.pos = p_174846_1_;
+       if (this.blockState.is(Blocks.GRASS_BLOCK)) {
+          return this;
+@@ -92,7 +_,13 @@
+    public static class Factory implements IParticleFactory<BlockParticleData> {
+       public Particle createParticle(BlockParticleData p_199234_1_, ClientWorld p_199234_2_, double p_199234_3_, double p_199234_5_, double p_199234_7_, double p_199234_9_, double p_199234_11_, double p_199234_13_) {
+          BlockState blockstate = p_199234_1_.getState();
+-         return !blockstate.isAir() && !blockstate.is(Blocks.MOVING_PISTON) ? (new DiggingParticle(p_199234_2_, p_199234_3_, p_199234_5_, p_199234_7_, p_199234_9_, p_199234_11_, p_199234_13_, blockstate)).init() : null;
++         return !blockstate.isAir() && !blockstate.is(Blocks.MOVING_PISTON) ? (new DiggingParticle(p_199234_2_, p_199234_3_, p_199234_5_, p_199234_7_, p_199234_9_, p_199234_11_, p_199234_13_, blockstate)).init().updateSprite(p_199234_1_.getPos()) : null;
+       }
++   }
++
++   private Particle updateSprite(BlockPos pos) { //FORGE: we cannot assume that the x y z of the particles match the block pos of the block.
++      if (pos != null) // There are cases where we are not able to obtain the correct source pos, and need to fallback to the non-model data version
++         this.setSprite(Minecraft.getInstance().getBlockRenderer().getBlockModelShaper().getTexture(blockState, level, pos));
++      return this;
+    }
+ }

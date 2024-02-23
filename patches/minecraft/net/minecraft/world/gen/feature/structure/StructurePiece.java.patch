@@ -1,0 +1,12 @@
+--- a/net/minecraft/world/gen/feature/structure/StructurePiece.java
++++ b/net/minecraft/world/gen/feature/structure/StructurePiece.java
+@@ -57,6 +_,9 @@
+    }
+ 
+    public final CompoundNBT createTag() {
++      if (Registry.STRUCTURE_PIECE.getKey(this.getType()) == null) { // FORGE: Friendlier error then the Null String error below.
++         throw new RuntimeException("StructurePiece \"" + this.getClass().getName() + "\": \"" + this.getType() + "\" missing ID Mapping, Modder see MapGenStructureIO");
++      }
+       CompoundNBT compoundnbt = new CompoundNBT();
+       compoundnbt.putString("id", Registry.STRUCTURE_PIECE.getKey(this.getType()).toString());
+       compoundnbt.put("BB", this.boundingBox.createTag());

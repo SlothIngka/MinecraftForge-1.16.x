@@ -1,0 +1,11 @@
+--- a/net/minecraft/entity/ai/goal/BreakBlockGoal.java
++++ b/net/minecraft/entity/ai/goal/BreakBlockGoal.java
+@@ -32,7 +_,7 @@
+    }
+ 
+    public boolean canUse() {
+-      if (!this.removerMob.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
++      if (!net.minecraftforge.common.ForgeHooks.canEntityDestroy(this.removerMob.level, this.blockPos, this.removerMob)) {
+          return false;
+       } else if (this.nextStartTick > 0) {
+          --this.nextStartTick;

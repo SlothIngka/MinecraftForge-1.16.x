@@ -1,0 +1,40 @@
+--- a/net/minecraft/entity/monster/ShulkerEntity.java
++++ b/net/minecraft/entity/monster/ShulkerEntity.java
+@@ -166,7 +_,7 @@
+          this.clientSideTeleportInterpolation = 0;
+       } else if (!this.level.isClientSide) {
+          BlockState blockstate = this.level.getBlockState(blockpos);
+-         if (!blockstate.isAir()) {
++         if (!blockstate.isAir(this.level, blockpos)) {
+             if (blockstate.is(Blocks.MOVING_PISTON)) {
+                Direction direction = blockstate.getValue(PistonBlock.FACING);
+                if (this.level.isEmptyBlock(blockpos.relative(direction))) {
+@@ -219,6 +_,7 @@
+          this.setPosAndOldPos((double)blockpos.getX() + 0.5D, (double)blockpos.getY(), (double)blockpos.getZ() + 0.5D);
+          double d2 = 0.5D - (double)MathHelper.sin((0.5F + this.currentPeekAmount) * (float)Math.PI) * 0.5D;
+          double d0 = 0.5D - (double)MathHelper.sin((0.5F + this.currentPeekAmountO) * (float)Math.PI) * 0.5D;
++         if (this.isAddedToWorld() && this.level instanceof net.minecraft.world.server.ServerWorld) ((net.minecraft.world.server.ServerWorld)this.level).updateChunkPos(this); // Forge - Process chunk registration after moving.
+          Direction direction2 = this.getAttachFace().getOpposite();
+          this.setBoundingBox((new AxisAlignedBB(this.getX() - 0.5D, this.getY(), this.getZ() - 0.5D, this.getX() + 0.5D, this.getY() + 1.0D, this.getZ() + 0.5D)).expandTowards((double)direction2.getStepX() * d2, (double)direction2.getStepY() * d2, (double)direction2.getStepZ() * d2));
+          double d1 = d2 - d0;
+@@ -249,6 +_,7 @@
+       super.setPos(p_70107_1_, p_70107_3_, p_70107_5_);
+       if (this.entityData != null && this.tickCount != 0) {
+          Optional<BlockPos> optional = this.entityData.get(DATA_ATTACH_POS_ID);
++         if (this.isAddedToWorld() && this.level instanceof net.minecraft.world.server.ServerWorld) ((net.minecraft.world.server.ServerWorld)this.level).updateChunkPos(this); // Forge - Process chunk registration after moving.
+          Optional<BlockPos> optional1 = Optional.of(new BlockPos(p_70107_1_, p_70107_3_, p_70107_5_));
+          if (!optional1.equals(optional)) {
+             this.entityData.set(DATA_ATTACH_POS_ID, optional1);
+@@ -282,6 +_,12 @@
+             BlockPos blockpos1 = blockpos.offset(8 - this.random.nextInt(17), 8 - this.random.nextInt(17), 8 - this.random.nextInt(17));
+             if (blockpos1.getY() > 0 && this.level.isEmptyBlock(blockpos1) && this.level.getWorldBorder().isWithinBounds(blockpos1) && this.level.noCollision(this, new AxisAlignedBB(blockpos1))) {
+                Direction direction = this.findAttachableFace(blockpos1);
++               if (direction != null) {
++                  net.minecraftforge.event.entity.living.EntityTeleportEvent.EnderEntity event = net.minecraftforge.event.ForgeEventFactory.onEnderTeleport(this, blockpos1.getX(), blockpos1.getY(), blockpos1.getZ());
++                  if (event.isCanceled()) direction = null;
++                  blockpos1 = new BlockPos(event.getTargetX(), event.getTargetY(), event.getTargetZ());
++               }
++
+                if (direction != null) {
+                   this.entityData.set(DATA_ATTACH_FACE_ID, direction);
+                   this.playSound(SoundEvents.SHULKER_TELEPORT, 1.0F, 1.0F);

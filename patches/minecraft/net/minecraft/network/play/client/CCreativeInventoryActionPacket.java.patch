@@ -1,0 +1,11 @@
+--- a/net/minecraft/network/play/client/CCreativeInventoryActionPacket.java
++++ b/net/minecraft/network/play/client/CCreativeInventoryActionPacket.java
+@@ -32,7 +_,7 @@
+ 
+    public void write(PacketBuffer p_148840_1_) throws IOException {
+       p_148840_1_.writeShort(this.slotNum);
+-      p_148840_1_.writeItem(this.itemStack);
++      p_148840_1_.writeItemStack(this.itemStack, false); //Forge: Include full tag for C->S
+    }
+ 
+    public int getSlotNum() {

@@ -1,0 +1,44 @@
+--- a/net/minecraft/entity/boss/dragon/EnderDragonEntity.java
++++ b/net/minecraft/entity/boss/dragon/EnderDragonEntity.java
+@@ -104,6 +_,14 @@
+       }
+ 
+       this.phaseManager = new PhaseManager(this);
++      this.setId(ENTITY_COUNTER.getAndAdd(this.subEntities.length + 1) + 1); // Forge: Fix MC-158205: Make sure part ids are successors of parent mob id
++   }
++
++   @Override
++   public void setId(int p_145769_1_) {
++      super.setId(p_145769_1_);
++      for(int i = 0; i < this.subEntities.length; ++i) // Forge: Fix MC-158205: Set part ids to successors of parent mob id
++         this.subEntities[i].setId(p_145769_1_ + i + 1);
+    }
+ 
+    public static AttributeModifierMap.MutableAttribute createAttributes() {
+@@ -408,8 +_,8 @@
+                BlockPos blockpos = new BlockPos(k1, l1, i2);
+                BlockState blockstate = this.level.getBlockState(blockpos);
+                Block block = blockstate.getBlock();
+-               if (!blockstate.isAir() && blockstate.getMaterial() != Material.FIRE) {
+-                  if (this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING) && !BlockTags.DRAGON_IMMUNE.contains(block)) {
++               if (!blockstate.isAir(this.level, blockpos) && blockstate.getMaterial() != Material.FIRE) {
++                  if (net.minecraftforge.common.ForgeHooks.canEntityDestroy(this.level, blockpos, this) && !BlockTags.DRAGON_IMMUNE.contains(block)) {
+                      flag1 = this.level.removeBlock(blockpos, false) || flag1;
+                   } else {
+                      flag = true;
+@@ -841,5 +_,15 @@
+ 
+    public boolean canChangeDimensions() {
+       return false;
++   }
++
++   @Override
++   public boolean isMultipartEntity() {
++      return true;
++   }
++
++   @Override
++   public net.minecraftforge.entity.PartEntity<?>[] getParts() {
++      return this.subEntities;
+    }
+ }

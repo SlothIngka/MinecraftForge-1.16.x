@@ -1,0 +1,43 @@
+--- a/net/minecraft/block/StemBlock.java
++++ b/net/minecraft/block/StemBlock.java
+@@ -37,22 +_,24 @@
+    }
+ 
+    public void randomTick(BlockState p_225542_1_, ServerWorld p_225542_2_, BlockPos p_225542_3_, Random p_225542_4_) {
++      if (!p_225542_2_.isAreaLoaded(p_225542_3_, 1)) return; // Forge: prevent loading unloaded chunks when checking neighbor's light
+       if (p_225542_2_.getRawBrightness(p_225542_3_, 0) >= 9) {
+          float f = CropsBlock.getGrowthSpeed(this, p_225542_2_, p_225542_3_);
+-         if (p_225542_4_.nextInt((int)(25.0F / f) + 1) == 0) {
++         if (net.minecraftforge.common.ForgeHooks.onCropsGrowPre(p_225542_2_, p_225542_3_, p_225542_1_, p_225542_4_.nextInt((int)(25.0F / f) + 1) == 0)) {
+             int i = p_225542_1_.getValue(AGE);
+             if (i < 7) {
+-               p_225542_1_ = p_225542_1_.setValue(AGE, Integer.valueOf(i + 1));
+-               p_225542_2_.setBlock(p_225542_3_, p_225542_1_, 2);
++               p_225542_2_.setBlock(p_225542_3_, p_225542_1_.setValue(AGE, Integer.valueOf(i + 1)), 2);
+             } else {
+                Direction direction = Direction.Plane.HORIZONTAL.getRandomDirection(p_225542_4_);
+                BlockPos blockpos = p_225542_3_.relative(direction);
+                BlockState blockstate = p_225542_2_.getBlockState(blockpos.below());
+-               if (p_225542_2_.getBlockState(blockpos).isAir() && (blockstate.is(Blocks.FARMLAND) || blockstate.is(Blocks.DIRT) || blockstate.is(Blocks.COARSE_DIRT) || blockstate.is(Blocks.PODZOL) || blockstate.is(Blocks.GRASS_BLOCK))) {
++               Block block = blockstate.getBlock();
++               if (p_225542_2_.isEmptyBlock(blockpos) && (blockstate.canSustainPlant(p_225542_2_, blockpos.below(), Direction.UP, this) || block == Blocks.FARMLAND || block == Blocks.DIRT || block == Blocks.COARSE_DIRT || block == Blocks.PODZOL || block == Blocks.GRASS_BLOCK)) {
+                   p_225542_2_.setBlockAndUpdate(blockpos, this.fruit.defaultBlockState());
+                   p_225542_2_.setBlockAndUpdate(p_225542_3_, this.fruit.getAttachedStem().defaultBlockState().setValue(HorizontalBlock.FACING, direction));
+                }
+             }
++            net.minecraftforge.common.ForgeHooks.onCropsGrowPost(p_225542_2_, p_225542_3_, p_225542_1_);
+          }
+ 
+       }
+@@ -96,5 +_,11 @@
+ 
+    public StemGrownBlock getFruit() {
+       return this.fruit;
++   }
++
++   //FORGE START
++   @Override
++   public net.minecraftforge.common.PlantType getPlantType(IBlockReader world, BlockPos pos) {
++      return net.minecraftforge.common.PlantType.CROP;
+    }
+ }

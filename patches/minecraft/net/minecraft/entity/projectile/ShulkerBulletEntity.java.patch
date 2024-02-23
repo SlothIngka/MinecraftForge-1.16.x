@@ -1,0 +1,11 @@
+--- a/net/minecraft/entity/projectile/ShulkerBulletEntity.java
++++ b/net/minecraft/entity/projectile/ShulkerBulletEntity.java
+@@ -213,7 +_,7 @@
+          }
+ 
+          RayTraceResult raytraceresult = ProjectileHelper.getHitResult(this, this::canHitEntity);
+-         if (raytraceresult.getType() != RayTraceResult.Type.MISS) {
++            if (raytraceresult.getType() != RayTraceResult.Type.MISS && !net.minecraftforge.event.ForgeEventFactory.onProjectileImpact(this, raytraceresult)) {
+             this.onHit(raytraceresult);
+          }
+       }

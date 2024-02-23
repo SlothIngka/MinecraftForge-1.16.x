@@ -1,0 +1,10 @@
+--- a/net/minecraft/world/gen/feature/DungeonsFeature.java
++++ b/net/minecraft/world/gen/feature/DungeonsFeature.java
+@@ -123,6 +_,6 @@
+    }
+ 
+    private EntityType<?> randomEntityId(Random p_201043_1_) {
+-      return Util.getRandom(MOBS, p_201043_1_);
++      return net.minecraftforge.common.DungeonHooks.getRandomDungeonMob(p_201043_1_);
+    }
+ }

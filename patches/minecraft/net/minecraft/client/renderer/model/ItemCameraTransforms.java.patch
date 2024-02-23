@@ -1,0 +1,26 @@
+--- a/net/minecraft/client/renderer/model/ItemCameraTransforms.java
++++ b/net/minecraft/client/renderer/model/ItemCameraTransforms.java
+@@ -25,6 +_,7 @@
+       this(ItemTransformVec3f.NO_TRANSFORM, ItemTransformVec3f.NO_TRANSFORM, ItemTransformVec3f.NO_TRANSFORM, ItemTransformVec3f.NO_TRANSFORM, ItemTransformVec3f.NO_TRANSFORM, ItemTransformVec3f.NO_TRANSFORM, ItemTransformVec3f.NO_TRANSFORM, ItemTransformVec3f.NO_TRANSFORM);
+    }
+ 
++   @Deprecated
+    public ItemCameraTransforms(ItemCameraTransforms p_i46443_1_) {
+       this.thirdPersonLeftHand = p_i46443_1_.thirdPersonLeftHand;
+       this.thirdPersonRightHand = p_i46443_1_.thirdPersonRightHand;
+@@ -36,6 +_,7 @@
+       this.fixed = p_i46443_1_.fixed;
+    }
+ 
++   @Deprecated
+    public ItemCameraTransforms(ItemTransformVec3f p_i46569_1_, ItemTransformVec3f p_i46569_2_, ItemTransformVec3f p_i46569_3_, ItemTransformVec3f p_i46569_4_, ItemTransformVec3f p_i46569_5_, ItemTransformVec3f p_i46569_6_, ItemTransformVec3f p_i46569_7_, ItemTransformVec3f p_i46569_8_) {
+       this.thirdPersonLeftHand = p_i46569_1_;
+       this.thirdPersonRightHand = p_i46569_2_;
+@@ -47,6 +_,7 @@
+       this.fixed = p_i46569_8_;
+    }
+ 
++   @Deprecated
+    public ItemTransformVec3f getTransform(ItemCameraTransforms.TransformType p_181688_1_) {
+       switch(p_181688_1_) {
+       case THIRD_PERSON_LEFT_HAND:

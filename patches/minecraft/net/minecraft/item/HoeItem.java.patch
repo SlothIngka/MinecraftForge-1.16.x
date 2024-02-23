@@ -1,0 +1,33 @@
+--- a/net/minecraft/item/HoeItem.java
++++ b/net/minecraft/item/HoeItem.java
+@@ -21,14 +_,16 @@
+    protected static final Map<Block, BlockState> TILLABLES = Maps.newHashMap(ImmutableMap.of(Blocks.GRASS_BLOCK, Blocks.FARMLAND.defaultBlockState(), Blocks.GRASS_PATH, Blocks.FARMLAND.defaultBlockState(), Blocks.DIRT, Blocks.FARMLAND.defaultBlockState(), Blocks.COARSE_DIRT, Blocks.DIRT.defaultBlockState()));
+ 
+    public HoeItem(IItemTier p_i231595_1_, int p_i231595_2_, float p_i231595_3_, Item.Properties p_i231595_4_) {
+-      super((float)p_i231595_2_, p_i231595_3_, p_i231595_1_, DIGGABLES, p_i231595_4_);
++      super((float)p_i231595_2_, p_i231595_3_, p_i231595_1_, DIGGABLES, p_i231595_4_.addToolType(net.minecraftforge.common.ToolType.HOE, p_i231595_1_.getLevel()));
+    }
+ 
+    public ActionResultType useOn(ItemUseContext p_195939_1_) {
+       World world = p_195939_1_.getLevel();
+       BlockPos blockpos = p_195939_1_.getClickedPos();
+-      if (p_195939_1_.getClickedFace() != Direction.DOWN && world.getBlockState(blockpos.above()).isAir()) {
+-         BlockState blockstate = TILLABLES.get(world.getBlockState(blockpos).getBlock());
++      int hook = net.minecraftforge.event.ForgeEventFactory.onHoeUse(p_195939_1_);
++      if (hook != 0) return hook > 0 ? ActionResultType.SUCCESS : ActionResultType.FAIL;
++      if (p_195939_1_.getClickedFace() != Direction.DOWN && world.isEmptyBlock(blockpos.above())) {
++         BlockState blockstate = world.getBlockState(blockpos).getToolModifiedState(world, blockpos, p_195939_1_.getPlayer(), p_195939_1_.getItemInHand(), net.minecraftforge.common.ToolType.HOE);
+          if (blockstate != null) {
+             PlayerEntity playerentity = p_195939_1_.getPlayer();
+             world.playSound(playerentity, blockpos, SoundEvents.HOE_TILL, SoundCategory.BLOCKS, 1.0F, 1.0F);
+@@ -46,5 +_,10 @@
+       }
+ 
+       return ActionResultType.PASS;
++   }
++
++   @javax.annotation.Nullable
++   public static BlockState getHoeTillingState(BlockState originalState) {
++      return TILLABLES.get(originalState.getBlock());
+    }
+ }

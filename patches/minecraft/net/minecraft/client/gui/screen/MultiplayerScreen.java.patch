@@ -1,0 +1,14 @@
+--- a/net/minecraft/client/gui/screen/MultiplayerScreen.java
++++ b/net/minecraft/client/gui/screen/MultiplayerScreen.java
+@@ -241,6 +_,11 @@
+ 
+    }
+ 
++   @Override
++   public void onClose() {
++      this.minecraft.setScreen(this.lastScreen);
++   }
++
+    public ServerPinger getPinger() {
+       return this.pinger;
+    }

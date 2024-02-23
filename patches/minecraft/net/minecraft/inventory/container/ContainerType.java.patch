@@ -1,0 +1,26 @@
+--- a/net/minecraft/inventory/container/ContainerType.java
++++ b/net/minecraft/inventory/container/ContainerType.java
+@@ -5,7 +_,7 @@
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+-public class ContainerType<T extends Container> {
++public class ContainerType<T extends Container> extends net.minecraftforge.registries.ForgeRegistryEntry<ContainerType<?>> implements net.minecraftforge.common.extensions.IForgeContainerType<T> {
+    public static final ContainerType<ChestContainer> GENERIC_9x1 = register("generic_9x1", ChestContainer::oneRow);
+    public static final ContainerType<ChestContainer> GENERIC_9x2 = register("generic_9x2", ChestContainer::twoRows);
+    public static final ContainerType<ChestContainer> GENERIC_9x3 = register("generic_9x3", ChestContainer::threeRows);
+@@ -45,6 +_,14 @@
+    @OnlyIn(Dist.CLIENT)
+    public T create(int p_221506_1_, PlayerInventory p_221506_2_) {
+       return this.constructor.create(p_221506_1_, p_221506_2_);
++   }
++   
++   @Override
++   public T create(int windowId, PlayerInventory playerInv, net.minecraft.network.PacketBuffer extraData) {
++      if (this.constructor instanceof net.minecraftforge.fml.network.IContainerFactory) {
++         return ((net.minecraftforge.fml.network.IContainerFactory<T>) this.constructor).create(windowId, playerInv, extraData);
++      }
++      return create(windowId, playerInv);
+    }
+ 
+    public interface IFactory<T extends Container> {

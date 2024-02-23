@@ -1,0 +1,16 @@
+--- a/net/minecraft/world/storage/DimensionSavedDataManager.java
++++ b/net/minecraft/world/storage/DimensionSavedDataManager.java
+@@ -47,9 +_,13 @@
+    @Nullable
+    public <T extends WorldSavedData> T get(Supplier<T> p_215753_1_, String p_215753_2_) {
+       WorldSavedData worldsaveddata = this.cache.get(p_215753_2_);
++      if (worldsaveddata == net.minecraftforge.common.util.DummyWorldSaveData.DUMMY) return null;
+       if (worldsaveddata == null && !this.cache.containsKey(p_215753_2_)) {
+          worldsaveddata = this.readSavedData(p_215753_1_, p_215753_2_);
+          this.cache.put(p_215753_2_, worldsaveddata);
++      } else if (worldsaveddata == null) {
++         this.cache.put(p_215753_2_, net.minecraftforge.common.util.DummyWorldSaveData.DUMMY);
++         return null;
+       }
+ 
+       return (T)worldsaveddata;

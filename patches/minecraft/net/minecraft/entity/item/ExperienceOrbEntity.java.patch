@@ -1,0 +1,36 @@
+--- a/net/minecraft/entity/item/ExperienceOrbEntity.java
++++ b/net/minecraft/entity/item/ExperienceOrbEntity.java
+@@ -98,7 +_,8 @@
+       this.move(MoverType.SELF, this.getDeltaMovement());
+       float f = 0.98F;
+       if (this.onGround) {
+-         f = this.level.getBlockState(new BlockPos(this.getX(), this.getY() - 1.0D, this.getZ())).getBlock().getFriction() * 0.98F;
++         BlockPos pos =new BlockPos(this.getX(), this.getY() - 1.0D, this.getZ());
++         f = this.level.getBlockState(pos).getSlipperiness(this.level, pos, this) * 0.98F;
+       }
+ 
+       this.setDeltaMovement(this.getDeltaMovement().multiply((double)f, 0.98D, (double)f));
+@@ -123,6 +_,7 @@
+    }
+ 
+    public boolean hurt(DamageSource p_70097_1_, float p_70097_2_) {
++      if (this.level.isClientSide || this.removed) return false; //Forge: Fixes MC-53850
+       if (this.isInvulnerableTo(p_70097_1_)) {
+          return false;
+       } else {
+@@ -151,13 +_,14 @@
+    public void playerTouch(PlayerEntity p_70100_1_) {
+       if (!this.level.isClientSide) {
+          if (this.throwTime == 0 && p_70100_1_.takeXpDelay == 0) {
++            if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.player.PlayerXpEvent.PickupXp(p_70100_1_, this))) return;
+             p_70100_1_.takeXpDelay = 2;
+             p_70100_1_.take(this, 1);
+             Entry<EquipmentSlotType, ItemStack> entry = EnchantmentHelper.getRandomItemWith(Enchantments.MENDING, p_70100_1_, ItemStack::isDamaged);
+             if (entry != null) {
+                ItemStack itemstack = entry.getValue();
+                if (!itemstack.isEmpty() && itemstack.isDamaged()) {
+-                  int i = Math.min(this.xpToDurability(this.value), itemstack.getDamageValue());
++                  int i = Math.min((int)(this.value * itemstack.getXpRepairRatio()), itemstack.getDamageValue());
+                   this.value -= this.durabilityToXp(i);
+                   itemstack.setDamageValue(itemstack.getDamageValue() - i);
+                }

@@ -1,0 +1,28 @@
+--- a/net/minecraft/util/RegistryKey.java
++++ b/net/minecraft/util/RegistryKey.java
+@@ -6,7 +_,7 @@
+ import java.util.function.Function;
+ import net.minecraft.util.registry.Registry;
+ 
+-public class RegistryKey<T> {
++public class RegistryKey<T> implements Comparable<RegistryKey<?>> {
+    private static final Map<String, RegistryKey<?>> VALUES = Collections.synchronizedMap(Maps.newIdentityHashMap());
+    private final ResourceLocation registryName;
+    private final ResourceLocation location;
+@@ -47,5 +_,16 @@
+       return (p_240907_1_) -> {
+          return create(p_240902_0_, p_240907_1_);
+       };
++   }
++
++   public ResourceLocation getRegistryName() {
++      return this.registryName;
++   }
++
++   @Override
++   public int compareTo(RegistryKey<?> o) {
++      int ret = this.getRegistryName().compareTo(o.getRegistryName());
++      if (ret == 0) ret = this.location().compareTo(o.location());
++      return ret;
+    }
+ }

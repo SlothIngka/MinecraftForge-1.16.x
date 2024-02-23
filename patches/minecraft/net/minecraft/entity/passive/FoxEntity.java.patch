@@ -1,0 +1,29 @@
+--- a/net/minecraft/entity/passive/FoxEntity.java
++++ b/net/minecraft/entity/passive/FoxEntity.java
+@@ -761,7 +_,7 @@
+       }
+ 
+       protected void onReachedTarget() {
+-         if (FoxEntity.this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
++         if (net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(FoxEntity.this.level, FoxEntity.this)) {
+             BlockState blockstate = FoxEntity.this.level.getBlockState(this.blockPos);
+             if (blockstate.is(Blocks.SWEET_BERRY_BUSH)) {
+                int i = blockstate.getValue(SweetBerryBushBlock.AGE);
+@@ -1001,6 +_,17 @@
+       protected void breed() {
+          ServerWorld serverworld = (ServerWorld)this.level;
+          FoxEntity foxentity = (FoxEntity)this.animal.getBreedOffspring(serverworld, this.partner);
++         final net.minecraftforge.event.entity.living.BabyEntitySpawnEvent event = new net.minecraftforge.event.entity.living.BabyEntitySpawnEvent(animal, partner, foxentity);
++         final boolean cancelled = net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(event);
++         foxentity = (FoxEntity) event.getChild();
++         if (cancelled) {
++            //Reset the "inLove" state for the animals
++            this.animal.setAge(6000);
++            this.partner.setAge(6000);
++            this.animal.resetLove();
++            this.partner.resetLove();
++            return;
++         }
+          if (foxentity != null) {
+             ServerPlayerEntity serverplayerentity = this.animal.getLoveCause();
+             ServerPlayerEntity serverplayerentity1 = this.partner.getLoveCause();

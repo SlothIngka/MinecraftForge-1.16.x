@@ -1,0 +1,33 @@
+--- a/net/minecraft/world/gen/feature/jigsaw/JigsawPattern.java
++++ b/net/minecraft/world/gen/feature/jigsaw/JigsawPattern.java
+@@ -104,11 +_,11 @@
+       return this.templates.size();
+    }
+ 
+-   public static enum PlacementBehaviour implements IStringSerializable {
++   public static enum PlacementBehaviour implements IStringSerializable, net.minecraftforge.common.IExtensibleEnum {
+       TERRAIN_MATCHING("terrain_matching", ImmutableList.of(new GravityStructureProcessor(Heightmap.Type.WORLD_SURFACE_WG, -1))),
+       RIGID("rigid", ImmutableList.of());
+ 
+-      public static final Codec<JigsawPattern.PlacementBehaviour> CODEC = IStringSerializable.fromEnum(JigsawPattern.PlacementBehaviour::values, JigsawPattern.PlacementBehaviour::byName);
++      public static final Codec<JigsawPattern.PlacementBehaviour> CODEC = net.minecraftforge.common.IExtensibleEnum.createCodecForExtensibleEnum(JigsawPattern.PlacementBehaviour::values, JigsawPattern.PlacementBehaviour::byName);
+       private static final Map<String, JigsawPattern.PlacementBehaviour> BY_NAME = Arrays.stream(values()).collect(Collectors.toMap(JigsawPattern.PlacementBehaviour::getName, (p_214935_0_) -> {
+          return p_214935_0_;
+       }));
+@@ -134,6 +_,16 @@
+ 
+       public String getSerializedName() {
+          return this.name;
++      }
++
++      public static PlacementBehaviour create(String enumName, String p_i50487_3_, ImmutableList<StructureProcessor> p_i50487_4_) {
++         throw new IllegalStateException("Enum not extended");
++      }
++
++      @Override
++      @Deprecated
++      public void init() {
++         BY_NAME.put(getName(), this);
+       }
+    }
+ }

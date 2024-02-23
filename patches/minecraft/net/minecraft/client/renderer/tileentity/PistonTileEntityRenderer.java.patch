@@ -1,0 +1,14 @@
+--- a/net/minecraft/client/renderer/tileentity/PistonTileEntityRenderer.java
++++ b/net/minecraft/client/renderer/tileentity/PistonTileEntityRenderer.java
+@@ -61,8 +_,11 @@
+    }
+ 
+    private void renderBlock(BlockPos p_228876_1_, BlockState p_228876_2_, MatrixStack p_228876_3_, IRenderTypeBuffer p_228876_4_, World p_228876_5_, boolean p_228876_6_, int p_228876_7_) {
++      net.minecraftforge.client.ForgeHooksClient.renderPistonMovedBlocks(p_228876_1_, p_228876_2_, p_228876_3_, p_228876_4_, p_228876_5_, p_228876_6_, p_228876_7_, blockRenderer == null ? blockRenderer = Minecraft.getInstance().getBlockRenderer() : blockRenderer);
++      if(false) {
+       RenderType rendertype = RenderTypeLookup.getMovingBlockRenderType(p_228876_2_);
+       IVertexBuilder ivertexbuilder = p_228876_4_.getBuffer(rendertype);
+       this.blockRenderer.getModelRenderer().tesselateBlock(p_228876_5_, this.blockRenderer.getBlockModel(p_228876_2_), p_228876_2_, p_228876_1_, p_228876_3_, ivertexbuilder, p_228876_6_, new Random(), p_228876_2_.getSeed(p_228876_1_), p_228876_7_);
++      }
+    }
+ }

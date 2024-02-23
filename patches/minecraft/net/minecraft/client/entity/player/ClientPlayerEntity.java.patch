@@ -1,0 +1,65 @@
+--- a/net/minecraft/client/entity/player/ClientPlayerEntity.java
++++ b/net/minecraft/client/entity/player/ClientPlayerEntity.java
+@@ -134,6 +_,7 @@
+    }
+ 
+    public boolean hurt(DamageSource p_70097_1_, float p_70097_2_) {
++      net.minecraftforge.common.ForgeHooks.onPlayerAttack(this, p_70097_1_, p_70097_2_);
+       return false;
+    }
+ 
+@@ -457,6 +_,11 @@
+    }
+ 
+    public void playSound(SoundEvent p_184185_1_, float p_184185_2_, float p_184185_3_) {
++      net.minecraftforge.event.entity.PlaySoundAtEntityEvent event = net.minecraftforge.event.ForgeEventFactory.onPlaySoundAtEntity(this, p_184185_1_, this.getSoundSource(), p_184185_2_, p_184185_3_);
++      if (event.isCanceled() || event.getSound() == null) return;
++      p_184185_1_ = event.getSound();
++      p_184185_2_ = event.getVolume();
++      p_184185_3_ = event.getPitch();
+       this.level.playLocalSound(this.getX(), this.getY(), this.getZ(), p_184185_1_, this.getSoundSource(), p_184185_2_, p_184185_3_, false);
+    }
+ 
+@@ -595,6 +_,7 @@
+       boolean flag2 = this.hasEnoughImpulseToStartSprinting();
+       this.crouching = !this.abilities.flying && !this.isSwimming() && this.canEnterPose(Pose.CROUCHING) && (this.isShiftKeyDown() || !this.isSleeping() && !this.canEnterPose(Pose.STANDING));
+       this.input.tick(this.isMovingSlowly());
++      net.minecraftforge.client.ForgeHooksClient.onInputUpdate(this, this.input);
+       this.minecraft.getTutorial().onInput(this.input);
+       if (this.isUsingItem() && !this.isPassenger()) {
+          this.input.leftImpulse *= 0.2F;
+@@ -667,7 +_,7 @@
+ 
+       if (this.input.jumping && !flag7 && !flag && !this.abilities.flying && !this.isPassenger() && !this.onClimbable()) {
+          ItemStack itemstack = this.getItemBySlot(EquipmentSlotType.CHEST);
+-         if (itemstack.getItem() == Items.ELYTRA && ElytraItem.isFlyEnabled(itemstack) && this.tryToStartFallFlying()) {
++         if (itemstack.canElytraFly(this) && this.tryToStartFallFlying()) {
+             this.connection.send(new CEntityActionPacket(this, CEntityActionPacket.Action.START_FALL_FLYING));
+          }
+       }
+@@ -777,6 +_,7 @@
+ 
+    public void rideTick() {
+       super.rideTick();
++      if (this.wantsToStopRiding() && this.isPassenger()) this.input.shiftKeyDown = false;
+       this.handsBusy = false;
+       if (this.getVehicle() instanceof BoatEntity) {
+          BoatEntity boatentity = (BoatEntity)this.getVehicle();
+@@ -974,5 +_,17 @@
+       } else {
+          return super.getRopeHoldPosition(p_241843_1_);
+       }
++   }
++
++   public void updateSyncFields(ClientPlayerEntity old) {
++      this.xLast = old.xLast;
++      this.yLast1 = old.yLast1;
++      this.zLast = old.zLast;
++      this.yRotLast = old.yRotLast;
++      this.xRotLast = old.xRotLast;
++      this.lastOnGround = old.lastOnGround;
++      this.wasShiftKeyDown = old.wasShiftKeyDown;
++      this.wasSprinting = old.wasSprinting;
++      this.positionReminder = old.positionReminder;
+    }
+ }

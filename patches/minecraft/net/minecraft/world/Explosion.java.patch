@@ -1,0 +1,67 @@
+--- a/net/minecraft/world/Explosion.java
++++ b/net/minecraft/world/Explosion.java
+@@ -58,6 +_,7 @@
+    private final ExplosionContext damageCalculator;
+    private final List<BlockPos> toBlow = Lists.newArrayList();
+    private final Map<PlayerEntity, Vector3d> hitPlayers = Maps.newHashMap();
++   private final Vector3d position;
+ 
+    @OnlyIn(Dist.CLIENT)
+    public Explosion(World p_i45752_1_, @Nullable Entity p_i45752_2_, double p_i45752_3_, double p_i45752_5_, double p_i45752_7_, float p_i45752_9_, List<BlockPos> p_i45752_10_) {
+@@ -86,6 +_,7 @@
+       this.blockInteraction = p_i231610_13_;
+       this.damageSource = p_i231610_3_ == null ? DamageSource.explosion(this) : p_i231610_3_;
+       this.damageCalculator = p_i231610_4_ == null ? this.makeDamageCalculator(p_i231610_2_) : p_i231610_4_;
++      this.position = new Vector3d(this.x, this.y, this.z);
+    }
+ 
+    private ExplosionContext makeDamageCalculator(@Nullable Entity p_234894_1_) {
+@@ -176,6 +_,7 @@
+       int j2 = MathHelper.floor(this.z - (double)f2 - 1.0D);
+       int j1 = MathHelper.floor(this.z + (double)f2 + 1.0D);
+       List<Entity> list = this.level.getEntities(this.source, new AxisAlignedBB((double)k1, (double)i2, (double)j2, (double)l1, (double)i1, (double)j1));
++      net.minecraftforge.event.ForgeEventFactory.onExplosionDetonate(this.level, this, list, f2);
+       Vector3d vector3d = new Vector3d(this.x, this.y, this.z);
+ 
+       for(int k2 = 0; k2 < list.size(); ++k2) {
+@@ -234,11 +_,11 @@
+          for(BlockPos blockpos : this.toBlow) {
+             BlockState blockstate = this.level.getBlockState(blockpos);
+             Block block = blockstate.getBlock();
+-            if (!blockstate.isAir()) {
++            if (!blockstate.isAir(this.level, blockpos)) {
+                BlockPos blockpos1 = blockpos.immutable();
+                this.level.getProfiler().push("explosion_blocks");
+-               if (block.dropFromExplosion(this) && this.level instanceof ServerWorld) {
+-                  TileEntity tileentity = block.isEntityBlock() ? this.level.getBlockEntity(blockpos) : null;
++               if (blockstate.canDropFromExplosion(this.level, blockpos, this) && this.level instanceof ServerWorld) {
++                  TileEntity tileentity = blockstate.hasTileEntity() ? this.level.getBlockEntity(blockpos) : null;
+                   LootContext.Builder lootcontext$builder = (new LootContext.Builder((ServerWorld)this.level)).withRandom(this.level.random).withParameter(LootParameters.ORIGIN, Vector3d.atCenterOf(blockpos)).withParameter(LootParameters.TOOL, ItemStack.EMPTY).withOptionalParameter(LootParameters.BLOCK_ENTITY, tileentity).withOptionalParameter(LootParameters.THIS_ENTITY, this.source);
+                   if (this.blockInteraction == Explosion.Mode.DESTROY) {
+                      lootcontext$builder.withParameter(LootParameters.EXPLOSION_RADIUS, this.radius);
+@@ -249,8 +_,7 @@
+                   });
+                }
+ 
+-               this.level.setBlock(blockpos, Blocks.AIR.defaultBlockState(), 3);
+-               block.wasExploded(this.level, blockpos, this);
++               blockstate.onBlockExploded(this.level, blockpos, this);
+                this.level.getProfiler().pop();
+             }
+          }
+@@ -322,6 +_,15 @@
+ 
+    public List<BlockPos> getToBlow() {
+       return this.toBlow;
++   }
++
++   public Vector3d getPosition() {
++      return this.position;
++   }
++
++   @Nullable
++   public Entity getExploder() {
++      return this.source;
+    }
+ 
+    public static enum Mode {

@@ -1,0 +1,106 @@
+--- a/net/minecraft/data/TagsProvider.java
++++ b/net/minecraft/data/TagsProvider.java
+@@ -28,10 +_,28 @@
+    protected final DataGenerator generator;
+    protected final Registry<T> registry;
+    protected final Map<ResourceLocation, ITag.Builder> builders = Maps.newLinkedHashMap();
++   protected final String modId;
++   protected final String folder;
++   protected final net.minecraftforge.common.data.ExistingFileHelper existingFileHelper;
++   private final net.minecraftforge.common.data.ExistingFileHelper.IResourceType resourceType;
+ 
++   @Deprecated//Forge, Use ModID version.
+    protected TagsProvider(DataGenerator p_i49827_1_, Registry<T> p_i49827_2_) {
++      this(p_i49827_1_, p_i49827_2_, "vanilla", null);
++   }
++   protected TagsProvider(DataGenerator p_i49827_1_, Registry<T> p_i49827_2_, String modId, @javax.annotation.Nullable net.minecraftforge.common.data.ExistingFileHelper existingFileHelper) {
++      this(p_i49827_1_, p_i49827_2_, modId, existingFileHelper, null);
++   }
++   protected TagsProvider(DataGenerator p_i49827_1_, Registry<T> p_i49827_2_, String modId, @javax.annotation.Nullable net.minecraftforge.common.data.ExistingFileHelper existingFileHelper, @javax.annotation.Nullable String folder) {
+       this.generator = p_i49827_1_;
+       this.registry = p_i49827_2_;
++      this.modId = modId;
++      this.existingFileHelper = existingFileHelper;
++      if (folder == null) {//TODO - 1.17: Remove getTagFolder as a method, and inline the default implementation here
++         folder = getTagFolder();
++      }
++      this.folder = folder;
++      this.resourceType = new net.minecraftforge.common.data.ExistingFileHelper.ResourceType(net.minecraft.resources.ResourcePackType.SERVER_DATA, ".json", "tags/" + this.folder);
+    }
+ 
+    protected abstract void addTags();
+@@ -47,12 +_,14 @@
+          return this.registry.getOptional(p_240527_1_).orElse((T)null);
+       };
+       this.builders.forEach((p_240524_4_, p_240524_5_) -> {
+-         List<ITag.Proxy> list = p_240524_5_.getUnresolvedEntries(function, function1).collect(Collectors.toList());
++         // FORGE: Add validation via existing resources
++         List<ITag.Proxy> list = p_240524_5_.getUnresolvedEntries(function, function1).filter(this::missing).collect(Collectors.toList());
+          if (!list.isEmpty()) {
+             throw new IllegalArgumentException(String.format("Couldn't define tag %s as it is missing following references: %s", p_240524_4_, list.stream().map(Objects::toString).collect(Collectors.joining(","))));
+          } else {
+             JsonObject jsonobject = p_240524_5_.serializeToJson();
+             Path path = this.getPath(p_240524_4_);
++            if (path == null) return; //Forge: Allow running this data provider without writing it. Recipe provider needs valid tags.
+ 
+             try {
+                String s = GSON.toJson((JsonElement)jsonobject);
+@@ -74,20 +_,36 @@
+       });
+    }
+ 
++   private boolean missing(ITag.Proxy reference) {
++      ITag.ITagEntry entry = reference.getEntry();
++      // We only care about non-optional tag entries, this is the only type that can reference a resource and needs validation
++      // Optional tags should not be validated
++      if (entry instanceof ITag.TagEntry) {
++         return existingFileHelper == null || !existingFileHelper.exists(((ITag.TagEntry)entry).getId(), resourceType);
++      }
++      return false;
++   }
++
++   @SuppressWarnings({ "unchecked", "rawtypes" })
++   protected String getTagFolder() {
++      return ((Registry)Registry.REGISTRY).getKey(registry).getPath() + "s";
++   }
++
+    protected abstract Path getPath(ResourceLocation p_200431_1_);
+ 
+    protected TagsProvider.Builder<T> tag(ITag.INamedTag<T> p_240522_1_) {
+       ITag.Builder itag$builder = this.getOrCreateRawBuilder(p_240522_1_);
+-      return new TagsProvider.Builder<>(itag$builder, this.registry, "vanilla");
++      return new TagsProvider.Builder<>(itag$builder, this.registry, modId);
+    }
+ 
+    protected ITag.Builder getOrCreateRawBuilder(ITag.INamedTag<T> p_240525_1_) {
+       return this.builders.computeIfAbsent(p_240525_1_.getName(), (p_240526_0_) -> {
++         existingFileHelper.trackGenerated(p_240526_0_, resourceType);
+          return new ITag.Builder();
+       });
+    }
+ 
+-   public static class Builder<T> {
++   public static class Builder<T> implements net.minecraftforge.common.extensions.IForgeTagBuilder<T> {
+       private final ITag.Builder builder;
+       private final Registry<T> registry;
+       private final String source;
+@@ -114,6 +_,19 @@
+             this.builder.addElement(p_240533_1_, this.source);
+          });
+          return this;
++      }
++
++      public TagsProvider.Builder<T> add(ITag.ITagEntry tag) {
++          builder.add(tag, source);
++          return this;
++      }
++
++      public ITag.Builder getInternalBuilder() {
++          return builder;
++      }
++
++      public String getModID() {
++          return source;
+       }
+    }
+ }

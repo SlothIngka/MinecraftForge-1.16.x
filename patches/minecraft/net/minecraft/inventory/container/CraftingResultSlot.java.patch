@@ -1,0 +1,21 @@
+--- a/net/minecraft/inventory/container/CraftingResultSlot.java
++++ b/net/minecraft/inventory/container/CraftingResultSlot.java
+@@ -43,6 +_,7 @@
+    protected void checkTakeAchievements(ItemStack p_75208_1_) {
+       if (this.removeCount > 0) {
+          p_75208_1_.onCraftedBy(this.player.level, this.player, this.removeCount);
++         net.minecraftforge.fml.hooks.BasicEventHooks.firePlayerCraftingEvent(this.player, p_75208_1_, this.craftSlots);
+       }
+ 
+       if (this.container instanceof IRecipeHolder) {
+@@ -54,8 +_,9 @@
+ 
+    public ItemStack onTake(PlayerEntity p_190901_1_, ItemStack p_190901_2_) {
+       this.checkTakeAchievements(p_190901_2_);
++      net.minecraftforge.common.ForgeHooks.setCraftingPlayer(p_190901_1_);
+       NonNullList<ItemStack> nonnulllist = p_190901_1_.level.getRecipeManager().getRemainingItemsFor(IRecipeType.CRAFTING, this.craftSlots, p_190901_1_.level);
+-
++      net.minecraftforge.common.ForgeHooks.setCraftingPlayer(null);
+       for(int i = 0; i < nonnulllist.size(); ++i) {
+          ItemStack itemstack = this.craftSlots.getItem(i);
+          ItemStack itemstack1 = nonnulllist.get(i);

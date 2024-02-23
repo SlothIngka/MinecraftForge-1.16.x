@@ -1,0 +1,22 @@
+--- a/net/minecraft/client/gui/screen/PackLoadingManager.java
++++ b/net/minecraft/client/gui/screen/PackLoadingManager.java
+@@ -134,6 +_,11 @@
+       public void moveDown() {
+          this.move(1);
+       }
++
++      @Override
++      public boolean notHidden() {
++          return !pack.isHidden();
++      }
+    }
+ 
+    @OnlyIn(Dist.CLIENT)
+@@ -229,5 +_,7 @@
+       boolean canMoveUp();
+ 
+       boolean canMoveDown();
++
++      default boolean notHidden() { return true; }
+    }
+ }

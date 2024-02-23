@@ -1,0 +1,15 @@
+--- a/net/minecraft/enchantment/FrostWalkerEnchantment.java
++++ b/net/minecraft/enchantment/FrostWalkerEnchantment.java
+@@ -42,9 +_,10 @@
+             if (blockpos.closerThan(p_185266_0_.position(), (double)f)) {
+                blockpos$mutable.set(blockpos.getX(), blockpos.getY() + 1, blockpos.getZ());
+                BlockState blockstate1 = p_185266_1_.getBlockState(blockpos$mutable);
+-               if (blockstate1.isAir()) {
++               if (blockstate1.isAir(p_185266_1_, blockpos$mutable)) {
+                   BlockState blockstate2 = p_185266_1_.getBlockState(blockpos);
+-                  if (blockstate2.getMaterial() == Material.WATER && blockstate2.getValue(FlowingFluidBlock.LEVEL) == 0 && blockstate.canSurvive(p_185266_1_, blockpos) && p_185266_1_.isUnobstructed(blockstate, blockpos, ISelectionContext.empty())) {
++                  boolean isFull = blockstate2.getBlock() == Blocks.WATER && blockstate2.getValue(FlowingFluidBlock.LEVEL) == 0; //TODO: Forge, modded waters?
++                  if (blockstate2.getMaterial() == Material.WATER && isFull && blockstate.canSurvive(p_185266_1_, blockpos) && p_185266_1_.isUnobstructed(blockstate, blockpos, ISelectionContext.empty()) && !net.minecraftforge.event.ForgeEventFactory.onBlockPlace(p_185266_0_, net.minecraftforge.common.util.BlockSnapshot.create(p_185266_1_.dimension(), p_185266_1_, blockpos), net.minecraft.util.Direction.UP)) {
+                      p_185266_1_.setBlockAndUpdate(blockpos, blockstate);
+                      p_185266_1_.getBlockTicks().scheduleTick(blockpos, Blocks.FROSTED_ICE, MathHelper.nextInt(p_185266_0_.getRandom(), 60, 120));
+                   }

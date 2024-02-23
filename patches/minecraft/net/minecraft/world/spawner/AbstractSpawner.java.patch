@@ -1,0 +1,27 @@
+--- a/net/minecraft/world/spawner/AbstractSpawner.java
++++ b/net/minecraft/world/spawner/AbstractSpawner.java
+@@ -131,11 +_,12 @@
+                      entity.moveTo(entity.getX(), entity.getY(), entity.getZ(), world.random.nextFloat() * 360.0F, 0.0F);
+                      if (entity instanceof MobEntity) {
+                         MobEntity mobentity = (MobEntity)entity;
+-                        if (!mobentity.checkSpawnRules(world, SpawnReason.SPAWNER) || !mobentity.checkSpawnObstruction(world)) {
++                        if (!net.minecraftforge.event.ForgeEventFactory.canEntitySpawnSpawner(mobentity, world, (float)entity.getX(), (float)entity.getY(), (float)entity.getZ(), this)) {
+                            continue;
+                         }
+ 
+                         if (this.nextSpawnData.getTag().size() == 1 && this.nextSpawnData.getTag().contains("id", 8)) {
++                        if (!net.minecraftforge.event.ForgeEventFactory.doSpecialSpawn(mobentity, world, (float)entity.getX(), (float)entity.getY(), (float)entity.getZ(), this, SpawnReason.SPAWNER))
+                            ((MobEntity)entity).finalizeSpawn(serverworld, world.getCurrentDifficultyAt(entity.blockPosition()), SpawnReason.SPAWNER, (ILivingEntityData)null, (CompoundNBT)null);
+                         }
+                      }
+@@ -282,5 +_,10 @@
+    @OnlyIn(Dist.CLIENT)
+    public double getoSpin() {
+       return this.oSpin;
++   }
++
++   @Nullable
++   public Entity getSpawnerEntity() {
++      return null;
+    }
+ }

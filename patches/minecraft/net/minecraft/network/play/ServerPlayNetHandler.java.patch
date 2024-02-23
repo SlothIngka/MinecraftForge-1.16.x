@@ -1,0 +1,62 @@
+--- a/net/minecraft/network/play/ServerPlayNetHandler.java
++++ b/net/minecraft/network/play/ServerPlayNetHandler.java
+@@ -391,9 +_,11 @@
+             }
+ 
+             entity.absMoveTo(d3, d4, d5, f, f1);
++            this.player.absMoveTo(d3, d4, d5, this.player.yRot, this.player.xRot); // Forge - Resync player position on vehicle moving
+             boolean flag2 = serverworld.noCollision(entity, entity.getBoundingBox().deflate(0.0625D));
+             if (flag && (flag1 || !flag2)) {
+                entity.absMoveTo(d0, d1, d2, f, f1);
++               this.player.absMoveTo(d3, d4, d5, this.player.yRot, this.player.xRot); // Forge - Resync player position on vehicle moving
+                this.connection.send(new SMoveVehiclePacket(entity));
+                return;
+             }
+@@ -410,7 +_,7 @@
+    }
+ 
+    private boolean noBlocksAround(Entity p_241162_1_) {
+-      return p_241162_1_.level.getBlockStates(p_241162_1_.getBoundingBox().inflate(0.0625D).expandTowards(0.0D, -0.55D, 0.0D)).allMatch(AbstractBlock.AbstractBlockState::isAir);
++      return BlockPos.betweenClosedStream(p_241162_1_.getBoundingBox().inflate(0.0625D).expandTowards(0.0D, -0.55D, 0.0D)).allMatch(b -> p_241162_1_.level.getBlockState(b).isAir(p_241162_1_.level, b));
+    }
+ 
+    public void handleAcceptTeleportPacket(CConfirmTeleportPacket p_184339_1_) {
+@@ -950,7 +_,9 @@
+       Direction direction = blockraytraceresult.getDirection();
+       this.player.resetLastActionTime();
+       if (blockpos.getY() < this.server.getMaxBuildHeight()) {
+-         if (this.awaitingPositionFromClient == null && this.player.distanceToSqr((double)blockpos.getX() + 0.5D, (double)blockpos.getY() + 0.5D, (double)blockpos.getZ() + 0.5D) < 64.0D && serverworld.mayInteract(this.player, blockpos)) {
++         double dist = player.getAttribute(net.minecraftforge.common.ForgeMod.REACH_DISTANCE.get()).getValue() + 3;
++         dist *= dist;
++         if (this.awaitingPositionFromClient == null && this.player.distanceToSqr((double)blockpos.getX() + 0.5D, (double)blockpos.getY() + 0.5D, (double)blockpos.getZ() + 0.5D) < dist && serverworld.mayInteract(this.player, blockpos)) {
+             ActionResultType actionresulttype = this.player.gameMode.useItemOn(this.player, serverworld, itemstack, hand, blockraytraceresult);
+             if (direction == Direction.UP && !actionresulttype.consumesAction() && blockpos.getY() >= this.server.getMaxBuildHeight() - 1 && wasBlockPlacementAttempt(this.player, itemstack)) {
+                ITextComponent itextcomponent = (new TranslationTextComponent("build.tooHigh", this.server.getMaxBuildHeight())).withStyle(TextFormatting.RED);
+@@ -1097,7 +_,9 @@
+          if (p_244548_1_.startsWith("/")) {
+             this.handleCommand(p_244548_1_);
+          } else {
+-            ITextComponent itextcomponent = new TranslationTextComponent("chat.type.text", this.player.getDisplayName(), p_244548_1_);
++            ITextComponent itextcomponent = new TranslationTextComponent("chat.type.text", this.player.getDisplayName(), net.minecraftforge.common.ForgeHooks.newChatWithLinks(p_244548_1_));
++            itextcomponent = net.minecraftforge.common.ForgeHooks.onServerChatEvent(this, p_244548_1_, itextcomponent);
++            if (itextcomponent == null) return;
+             this.server.getPlayerList().broadcastMessage(itextcomponent, ChatType.CHAT, this.player.getUUID());
+          }
+ 
+@@ -1187,6 +_,7 @@
+             if (p_147340_1_.getAction() == CUseEntityPacket.Action.INTERACT) {
+                optional = Optional.of(this.player.interactOn(entity, hand));
+             } else if (p_147340_1_.getAction() == CUseEntityPacket.Action.INTERACT_AT) {
++               if (net.minecraftforge.common.ForgeHooks.onInteractEntityAt(player, entity, p_147340_1_.getLocation(), hand) != null) return;
+                optional = Optional.of(entity.interactAt(this.player, p_147340_1_.getLocation(), hand));
+             } else if (p_147340_1_.getAction() == CUseEntityPacket.Action.ATTACK) {
+                if (entity instanceof ItemEntity || entity instanceof ExperienceOrbEntity || entity instanceof AbstractArrowEntity || entity == this.player) {
+@@ -1402,6 +_,8 @@
+    }
+ 
+    public void handleCustomPayload(CCustomPayloadPacket p_147349_1_) {
++      PacketThreadUtil.ensureRunningOnSameThread(p_147349_1_, this, this.player.getLevel());
++      net.minecraftforge.fml.network.NetworkHooks.onCustomPayload(p_147349_1_, this.connection);
+    }
+ 
+    public void handleChangeDifficulty(CSetDifficultyPacket p_217263_1_) {

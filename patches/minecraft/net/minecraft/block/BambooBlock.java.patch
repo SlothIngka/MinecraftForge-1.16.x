@@ -1,0 +1,16 @@
+--- a/net/minecraft/block/BambooBlock.java
++++ b/net/minecraft/block/BambooBlock.java
+@@ -100,10 +_,11 @@
+ 
+    public void randomTick(BlockState p_225542_1_, ServerWorld p_225542_2_, BlockPos p_225542_3_, Random p_225542_4_) {
+       if (p_225542_1_.getValue(STAGE) == 0) {
+-         if (p_225542_4_.nextInt(3) == 0 && p_225542_2_.isEmptyBlock(p_225542_3_.above()) && p_225542_2_.getRawBrightness(p_225542_3_.above(), 0) >= 9) {
++         if (p_225542_2_.isEmptyBlock(p_225542_3_.above()) && p_225542_2_.getRawBrightness(p_225542_3_.above(), 0) >= 9) {
+             int i = this.getHeightBelowUpToMax(p_225542_2_, p_225542_3_) + 1;
+-            if (i < 16) {
++            if (i < 16 && net.minecraftforge.common.ForgeHooks.onCropsGrowPre(p_225542_2_, p_225542_3_, p_225542_1_, p_225542_4_.nextInt(3) == 0)) {
+                this.growBamboo(p_225542_1_, p_225542_2_, p_225542_3_, p_225542_4_, i);
++               net.minecraftforge.common.ForgeHooks.onCropsGrowPost(p_225542_2_, p_225542_3_, p_225542_1_);
+             }
+          }
+ 

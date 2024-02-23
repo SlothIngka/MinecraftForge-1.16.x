@@ -1,0 +1,17 @@
+--- a/net/minecraft/util/math/RayTraceContext.java
++++ b/net/minecraft/util/math/RayTraceContext.java
+@@ -18,12 +_,12 @@
+    private final RayTraceContext.FluidMode fluid;
+    private final ISelectionContext collisionContext;
+ 
+-   public RayTraceContext(Vector3d p_i50009_1_, Vector3d p_i50009_2_, RayTraceContext.BlockMode p_i50009_3_, RayTraceContext.FluidMode p_i50009_4_, Entity p_i50009_5_) {
++   public RayTraceContext(Vector3d p_i50009_1_, Vector3d p_i50009_2_, RayTraceContext.BlockMode p_i50009_3_, RayTraceContext.FluidMode p_i50009_4_, @javax.annotation.Nullable Entity p_i50009_5_) {
+       this.from = p_i50009_1_;
+       this.to = p_i50009_2_;
+       this.block = p_i50009_3_;
+       this.fluid = p_i50009_4_;
+-      this.collisionContext = ISelectionContext.of(p_i50009_5_);
++      this.collisionContext = p_i50009_5_ == null ? ISelectionContext.empty() : ISelectionContext.of(p_i50009_5_);
+    }
+ 
+    public Vector3d getTo() {

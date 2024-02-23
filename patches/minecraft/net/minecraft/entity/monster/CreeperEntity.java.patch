@@ -1,0 +1,11 @@
+--- a/net/minecraft/entity/monster/CreeperEntity.java
++++ b/net/minecraft/entity/monster/CreeperEntity.java
+@@ -216,7 +_,7 @@
+ 
+    private void explodeCreeper() {
+       if (!this.level.isClientSide) {
+-         Explosion.Mode explosion$mode = this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING) ? Explosion.Mode.DESTROY : Explosion.Mode.NONE;
++         Explosion.Mode explosion$mode = net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.level, this) ? Explosion.Mode.DESTROY : Explosion.Mode.NONE;
+          float f = this.isPowered() ? 2.0F : 1.0F;
+          this.dead = true;
+          this.level.explode(this, this.getX(), this.getY(), this.getZ(), (float)this.explosionRadius * f, explosion$mode);

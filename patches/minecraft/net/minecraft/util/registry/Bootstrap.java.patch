@@ -1,0 +1,19 @@
+--- a/net/minecraft/util/registry/Bootstrap.java
++++ b/net/minecraft/util/registry/Bootstrap.java
+@@ -48,6 +_,8 @@
+                IDispenseItemBehavior.bootStrap();
+                ArgumentTypes.bootStrap();
+                TagRegistryManager.bootStrap();
++               net.minecraftforge.registries.GameData.vanillaSnapshot();
++               if (false) // skip redirectOutputToLog, Forge already redirects stdout and stderr output to log so that they print with more context
+                wrapStreams();
+             }
+          }
+@@ -103,7 +_,6 @@
+             Commands.validate();
+          }
+ 
+-         GlobalEntityTypeAttributes.validate();
+       }
+    }
+ 

@@ -1,0 +1,10 @@
+--- a/net/minecraft/client/renderer/texture/TextureManager.java
++++ b/net/minecraft/client/renderer/texture/TextureManager.java
+@@ -157,6 +_,7 @@
+    public void release(ResourceLocation p_147645_1_) {
+       Texture texture = this.getTexture(p_147645_1_);
+       if (texture != null) {
++         this.byPath.remove(p_147645_1_); // Forge: fix MC-98707
+          TextureUtil.releaseTextureId(texture.getId());
+       }
+ 

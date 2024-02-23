@@ -1,0 +1,39 @@
+--- a/net/minecraft/block/StairsBlock.java
++++ b/net/minecraft/block/StairsBlock.java
+@@ -83,11 +_,21 @@
+       return voxelshape;
+    }
+ 
++   @Deprecated // Forge: Use the other constructor that takes a Supplier
+    public StairsBlock(BlockState p_i48321_1_, AbstractBlock.Properties p_i48321_2_) {
+       super(p_i48321_2_);
+       this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(HALF, Half.BOTTOM).setValue(SHAPE, StairsShape.STRAIGHT).setValue(WATERLOGGED, Boolean.valueOf(false)));
+       this.base = p_i48321_1_.getBlock();
+       this.baseState = p_i48321_1_;
++      this.stateSupplier = () -> p_i48321_1_;
++   }
++
++   public StairsBlock(java.util.function.Supplier<BlockState> state, AbstractBlock.Properties properties) {
++      super(properties);
++      this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(HALF, Half.BOTTOM).setValue(SHAPE, StairsShape.STRAIGHT).setValue(WATERLOGGED, Boolean.valueOf(false)));
++      this.base = Blocks.AIR; // These are unused, fields are redirected
++      this.baseState = Blocks.AIR.defaultBlockState();
++      this.stateSupplier = state;
+    }
+ 
+    public boolean useShapeForLightOcclusion(BlockState p_220074_1_) {
+@@ -265,4 +_,14 @@
+    public boolean isPathfindable(BlockState p_196266_1_, IBlockReader p_196266_2_, BlockPos p_196266_3_, PathType p_196266_4_) {
+       return false;
+    }
++
++   // Forge Start
++   private final java.util.function.Supplier<BlockState> stateSupplier;
++   private Block getModelBlock() {
++       return getModelState().getBlock();
++   }
++   private BlockState getModelState() {
++       return stateSupplier.get();
++   }
++   // Forge end
+ }

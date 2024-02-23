@@ -1,0 +1,22 @@
+--- a/net/minecraft/client/shader/ShaderInstance.java
++++ b/net/minecraft/client/shader/ShaderInstance.java
+@@ -51,7 +_,8 @@
+    private final ShaderLoader fragmentProgram;
+ 
+    public ShaderInstance(IResourceManager p_i50988_1_, String p_i50988_2_) throws IOException {
+-      ResourceLocation resourcelocation = new ResourceLocation("shaders/program/" + p_i50988_2_ + ".json");
++      ResourceLocation rl = ResourceLocation.tryParse(p_i50988_2_);
++      ResourceLocation resourcelocation = new ResourceLocation(rl.getNamespace(), "shaders/program/" + rl.getPath() + ".json");
+       this.name = p_i50988_2_;
+       IResource iresource = null;
+ 
+@@ -149,7 +_,8 @@
+    public static ShaderLoader getOrCreate(IResourceManager p_216542_0_, ShaderLoader.ShaderType p_216542_1_, String p_216542_2_) throws IOException {
+       ShaderLoader shaderloader = p_216542_1_.getPrograms().get(p_216542_2_);
+       if (shaderloader == null) {
+-         ResourceLocation resourcelocation = new ResourceLocation("shaders/program/" + p_216542_2_ + p_216542_1_.getExtension());
++         ResourceLocation rl = ResourceLocation.tryParse(p_216542_2_);
++         ResourceLocation resourcelocation = new ResourceLocation(rl.getNamespace(), "shaders/program/" + rl.getPath() + p_216542_1_.getExtension());
+          IResource iresource = p_216542_0_.getResource(resourcelocation);
+ 
+          try {

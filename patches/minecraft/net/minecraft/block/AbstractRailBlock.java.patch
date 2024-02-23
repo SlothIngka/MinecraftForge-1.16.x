@@ -1,0 +1,58 @@
+--- a/net/minecraft/block/AbstractRailBlock.java
++++ b/net/minecraft/block/AbstractRailBlock.java
+@@ -13,7 +_,7 @@
+ import net.minecraft.world.IWorldReader;
+ import net.minecraft.world.World;
+ 
+-public abstract class AbstractRailBlock extends Block {
++public abstract class AbstractRailBlock extends Block implements net.minecraftforge.common.extensions.IAbstractRailBlock {
+    protected static final VoxelShape FLAT_AABB = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 2.0D, 16.0D);
+    protected static final VoxelShape HALF_BLOCK_AABB = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 8.0D, 16.0D);
+    private final boolean isStraight;
+@@ -37,6 +_,7 @@
+ 
+    public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
+       RailShape railshape = p_220053_1_.is(this) ? p_220053_1_.getValue(this.getShapeProperty()) : null;
++      RailShape railShape2 = p_220053_1_.is(this) ? getRailDirection(p_220053_1_, p_220053_2_, p_220053_3_, null) : null;
+       return railshape != null && railshape.isAscending() ? HALF_BLOCK_AABB : FLAT_AABB;
+    }
+ 
+@@ -61,7 +_,7 @@
+ 
+    public void neighborChanged(BlockState p_220069_1_, World p_220069_2_, BlockPos p_220069_3_, Block p_220069_4_, BlockPos p_220069_5_, boolean p_220069_6_) {
+       if (!p_220069_2_.isClientSide && p_220069_2_.getBlockState(p_220069_3_).is(this)) {
+-         RailShape railshape = p_220069_1_.getValue(this.getShapeProperty());
++         RailShape railshape = getRailDirection(p_220069_1_, p_220069_2_, p_220069_3_, null);
+          if (shouldBeRemoved(p_220069_3_, p_220069_2_, railshape)) {
+             dropResources(p_220069_1_, p_220069_2_, p_220069_3_);
+             p_220069_2_.removeBlock(p_220069_3_, p_220069_6_);
+@@ -110,7 +_,7 @@
+    public void onRemove(BlockState p_196243_1_, World p_196243_2_, BlockPos p_196243_3_, BlockState p_196243_4_, boolean p_196243_5_) {
+       if (!p_196243_5_) {
+          super.onRemove(p_196243_1_, p_196243_2_, p_196243_3_, p_196243_4_, p_196243_5_);
+-         if (p_196243_1_.getValue(this.getShapeProperty()).isAscending()) {
++         if (getRailDirection(p_196243_1_, p_196243_2_, p_196243_3_, null).isAscending()) {
+             p_196243_2_.updateNeighborsAt(p_196243_3_.above(), this);
+          }
+ 
+@@ -129,5 +_,20 @@
+       return blockstate.setValue(this.getShapeProperty(), flag ? RailShape.EAST_WEST : RailShape.NORTH_SOUTH);
+    }
+ 
++   @Deprecated //Forge: Use getRailDirection(IBlockAccess, BlockPos, IBlockState, EntityMinecart) for enhanced ability
+    public abstract Property<RailShape> getShapeProperty();
++
++   /* ======================================== FORGE START =====================================*/
++
++   @Override
++   public boolean isFlexibleRail(BlockState state, IBlockReader world, BlockPos pos)
++   {
++      return  !this.isStraight;
++   }
++
++   @Override
++   public RailShape getRailDirection(BlockState state, IBlockReader world, BlockPos pos, @javax.annotation.Nullable net.minecraft.entity.item.minecart.AbstractMinecartEntity cart) {
++      return state.getValue(getShapeProperty());
++   }
++   /* ========================================= FORGE END ======================================*/
+ }

@@ -1,0 +1,238 @@
+--- a/net/minecraft/entity/player/ServerPlayerEntity.java
++++ b/net/minecraft/entity/player/ServerPlayerEntity.java
+@@ -475,6 +_,7 @@
+    }
+ 
+    public void die(DamageSource p_70645_1_) {
++      if (net.minecraftforge.common.ForgeHooks.onLivingDeath(this, p_70645_1_)) return;
+       boolean flag = this.level.getGameRules().getBoolean(GameRules.RULE_SHOWDEATHMESSAGES);
+       if (flag) {
+          ITextComponent itextcomponent = this.getCombatTracker().getDeathMessage();
+@@ -618,13 +_,14 @@
+    }
+ 
+    @Nullable
+-   public Entity changeDimension(ServerWorld p_241206_1_) {
++   public Entity changeDimension(ServerWorld p_241206_1_, net.minecraftforge.common.util.ITeleporter teleporter) {
++      if (!net.minecraftforge.common.ForgeHooks.onTravelToDimension(this, p_241206_1_.dimension())) return null;
+       this.isChangingDimension = true;
+       ServerWorld serverworld = this.getLevel();
+       RegistryKey<World> registrykey = serverworld.dimension();
+-      if (registrykey == World.END && p_241206_1_.dimension() == World.OVERWORLD) {
++      if (registrykey == World.END && p_241206_1_.dimension() == World.OVERWORLD && teleporter.isVanilla()) { //Forge: Fix non-vanilla teleporters triggering end credits
+          this.unRide();
+-         this.getLevel().removePlayerImmediately(this);
++         this.getLevel().removePlayer(this, true); //Forge: The player entity is cloned so keep the data until after cloning calls copyFrom
+          if (!this.wonGame) {
+             this.wonGame = true;
+             this.connection.send(new SChangeGameStatePacket(SChangeGameStatePacket.WIN_GAME, this.seenCredits ? 0.0F : 1.0F));
+@@ -638,14 +_,15 @@
+          this.connection.send(new SServerDifficultyPacket(iworldinfo.getDifficulty(), iworldinfo.isDifficultyLocked()));
+          PlayerList playerlist = this.server.getPlayerList();
+          playerlist.sendPlayerPermissionLevel(this);
+-         serverworld.removePlayerImmediately(this);
+-         this.removed = false;
+-         PortalInfo portalinfo = this.findDimensionEntryPoint(p_241206_1_);
++         serverworld.removeEntity(this, true); //Forge: the player entity is moved to the new world, NOT cloned. So keep the data alive with no matching invalidate call.
++         this.revive();
++         PortalInfo portalinfo = teleporter.getPortalInfo(this, p_241206_1_, this::findDimensionEntryPoint);
+          if (portalinfo != null) {
++            Entity e = teleporter.placeEntity(this, serverworld, p_241206_1_, this.yRot, spawnPortal -> {//Forge: Start vanilla logic
+             serverworld.getProfiler().push("moving");
+             if (registrykey == World.OVERWORLD && p_241206_1_.dimension() == World.NETHER) {
+                this.enteredNetherPosition = this.position();
+-            } else if (p_241206_1_.dimension() == World.END) {
++            } else if (spawnPortal && p_241206_1_.dimension() == World.END) {
+                this.createEndPlatform(p_241206_1_, new BlockPos(portalinfo.pos));
+             }
+ 
+@@ -657,6 +_,9 @@
+             this.moveTo(portalinfo.pos.x, portalinfo.pos.y, portalinfo.pos.z);
+             serverworld.getProfiler().pop();
+             this.triggerDimensionChangeTriggers(serverworld);
++            return this;//forge: this is part of the ITeleporter patch
++            });//Forge: End vanilla logic
++            if (e != this) throw new java.lang.IllegalArgumentException(String.format("Teleporter %s returned not the player entity but instead %s, expected PlayerEntity %s", teleporter, e, this));
+             this.gameMode.setLevel(p_241206_1_);
+             this.connection.send(new SPlayerAbilitiesPacket(this.abilities));
+             playerlist.sendLevelInfo(this, p_241206_1_);
+@@ -666,10 +_,12 @@
+                this.connection.send(new SPlayEntityEffectPacket(this.getId(), effectinstance));
+             }
+ 
++            if (teleporter.playTeleportSound(this, serverworld, p_241206_1_))
+             this.connection.send(new SPlaySoundEventPacket(1032, BlockPos.ZERO, 0, false));
+             this.lastSentExp = -1;
+             this.lastSentHealth = -1.0F;
+             this.lastSentFood = -1;
++            net.minecraftforge.fml.hooks.BasicEventHooks.firePlayerChangedDimensionEvent(this, registrykey, p_241206_1_.dimension());
+          }
+ 
+          return this;
+@@ -743,6 +_,9 @@
+    }
+ 
+    public Either<PlayerEntity.SleepResult, Unit> startSleepInBed(BlockPos p_213819_1_) {
++      java.util.Optional<BlockPos> optAt = java.util.Optional.of(p_213819_1_);
++      PlayerEntity.SleepResult ret = net.minecraftforge.event.ForgeEventFactory.onPlayerSleepInBed(this, optAt);
++      if (ret != null) return Either.left(ret);
+       Direction direction = this.level.getBlockState(p_213819_1_).getValue(HorizontalBlock.FACING);
+       if (!this.isSleeping() && this.isAlive()) {
+          if (!this.level.dimensionType().natural()) {
+@@ -753,7 +_,7 @@
+             return Either.left(PlayerEntity.SleepResult.OBSTRUCTED);
+          } else {
+             this.setRespawnPosition(this.level.dimension(), p_213819_1_, this.yRot, false, true);
+-            if (this.level.isDay()) {
++            if (!net.minecraftforge.event.ForgeEventFactory.fireSleepingTimeCheck(this, optAt)) {
+                return Either.left(PlayerEntity.SleepResult.NOT_POSSIBLE_NOW);
+             } else {
+                if (!this.isCreative()) {
+@@ -787,6 +_,7 @@
+    }
+ 
+    private boolean bedInRange(BlockPos p_241147_1_, Direction p_241147_2_) {
++      if (p_241147_2_ == null) return false;
+       return this.isReachableBedBlock(p_241147_1_) || this.isReachableBedBlock(p_241147_1_.relative(p_241147_2_.getOpposite()));
+    }
+ 
+@@ -886,6 +_,7 @@
+             this.connection.send(new SOpenWindowPacket(container.containerId, container.getType(), p_213829_1_.getDisplayName()));
+             container.addSlotListener(this);
+             this.containerMenu = container;
++            net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.player.PlayerContainerEvent.Open(this, this.containerMenu));
+             return OptionalInt.of(this.containerCounter);
+          }
+       }
+@@ -904,6 +_,7 @@
+       this.connection.send(new SOpenHorseWindowPacket(this.containerCounter, p_184826_2_.getContainerSize(), p_184826_1_.getId()));
+       this.containerMenu = new HorseInventoryContainer(this.containerCounter, this.inventory, p_184826_2_, p_184826_1_);
+       this.containerMenu.addSlotListener(this);
++      net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.player.PlayerContainerEvent.Open(this, this.containerMenu));
+    }
+ 
+    public void openItemGui(ItemStack p_184814_1_, Hand p_184814_2_) {
+@@ -961,6 +_,7 @@
+ 
+    public void doCloseContainer() {
+       this.containerMenu.removed(this);
++      net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.player.PlayerContainerEvent.Close(this, this.containerMenu));
+       this.containerMenu = this.inventoryMenu;
+    }
+ 
+@@ -1085,6 +_,13 @@
+       this.enteredNetherPosition = p_193104_1_.enteredNetherPosition;
+       this.setShoulderEntityLeft(p_193104_1_.getShoulderEntityLeft());
+       this.setShoulderEntityRight(p_193104_1_.getShoulderEntityRight());
++
++      //Copy over a section of the Entity Data from the old player.
++      //Allows mods to specify data that persists after players respawn.
++      CompoundNBT old = p_193104_1_.getPersistentData();
++      if (old.contains(PERSISTED_NBT_TAG))
++          getPersistentData().put(PERSISTED_NBT_TAG, old.get(PERSISTED_NBT_TAG));
++      net.minecraftforge.event.ForgeEventFactory.onPlayerClone(this, p_193104_1_, !p_193104_2_);
+    }
+ 
+    protected void onEffectAdded(EffectInstance p_70670_1_) {
+@@ -1143,6 +_,7 @@
+    }
+ 
+    public void setGameMode(GameType p_71033_1_) {
++      if (!net.minecraftforge.common.ForgeHooks.onChangeGameMode(this, this.gameMode.getGameModeForPlayer(), p_71033_1_)) return;
+       this.gameMode.setGameModeForPlayer(p_71033_1_);
+       this.connection.send(new SChangeGameStatePacket(SChangeGameStatePacket.CHANGE_GAME_MODE, (float)p_71033_1_.getId()));
+       if (p_71033_1_ == GameType.SPECTATOR) {
+@@ -1191,6 +_,7 @@
+       this.canChatColor = p_147100_1_.getChatColors();
+       this.getEntityData().set(DATA_PLAYER_MODE_CUSTOMISATION, (byte)p_147100_1_.getModelCustomisation());
+       this.getEntityData().set(DATA_PLAYER_MAIN_HAND, (byte)(p_147100_1_.getMainHand() == HandSide.LEFT ? 0 : 1));
++      this.language = p_147100_1_.getLanguage();
+    }
+ 
+    public ChatVisibility getChatVisibility() {
+@@ -1276,7 +_,11 @@
+ 
+    @Nullable
+    public ITextComponent getTabListDisplayName() {
+-      return null;
++      if (!this.hasTabListName) {
++         this.tabListDisplayName = net.minecraftforge.event.ForgeEventFactory.getPlayerTabListDisplayName(this);
++         this.hasTabListName = true;
++      }
++      return this.tabListDisplayName;
+    }
+ 
+    public void swing(Hand p_184609_1_) {
+@@ -1301,14 +_,14 @@
+       this.stopRiding();
+       if (p_200619_1_ == this.level) {
+          this.connection.teleport(p_200619_2_, p_200619_4_, p_200619_6_, p_200619_8_, p_200619_9_);
+-      } else {
++      } else if (net.minecraftforge.common.ForgeHooks.onTravelToDimension(this, p_200619_1_.dimension())) {
+          ServerWorld serverworld = this.getLevel();
+          IWorldInfo iworldinfo = p_200619_1_.getLevelData();
+          this.connection.send(new SRespawnPacket(p_200619_1_.dimensionType(), p_200619_1_.dimension(), BiomeManager.obfuscateSeed(p_200619_1_.getSeed()), this.gameMode.getGameModeForPlayer(), this.gameMode.getPreviousGameModeForPlayer(), p_200619_1_.isDebug(), p_200619_1_.isFlat(), true));
+          this.connection.send(new SServerDifficultyPacket(iworldinfo.getDifficulty(), iworldinfo.isDifficultyLocked()));
+          this.server.getPlayerList().sendPlayerPermissionLevel(this);
+-         serverworld.removePlayerImmediately(this);
+-         this.removed = false;
++         serverworld.removePlayer(this, true); //Forge: The player entity itself is moved, and not cloned. So we need to keep the data alive with no matching invalidate call later.
++         this.revive();
+          this.moveTo(p_200619_2_, p_200619_4_, p_200619_6_, p_200619_8_, p_200619_9_);
+          this.setLevel(p_200619_1_);
+          p_200619_1_.addDuringCommandTeleport(this);
+@@ -1317,6 +_,7 @@
+          this.gameMode.setLevel(p_200619_1_);
+          this.server.getPlayerList().sendLevelInfo(this, p_200619_1_);
+          this.server.getPlayerList().sendAllPlayerInfo(this);
++         net.minecraftforge.fml.hooks.BasicEventHooks.firePlayerChangedDimensionEvent(this, serverworld.dimension(), p_200619_1_.dimension());
+       }
+ 
+    }
+@@ -1339,6 +_,7 @@
+    }
+ 
+    public void setRespawnPosition(RegistryKey<World> p_242111_1_, @Nullable BlockPos p_242111_2_, float p_242111_3_, boolean p_242111_4_, boolean p_242111_5_) {
++      if (net.minecraftforge.event.ForgeEventFactory.onPlayerSpawnSet(this, p_242111_2_ == null ? World.OVERWORLD : p_242111_1_, p_242111_2_, p_242111_4_)) return;
+       if (p_242111_2_ != null) {
+          boolean flag = p_242111_2_.equals(this.respawnPosition) && p_242111_1_.equals(this.respawnDimension);
+          if (p_242111_5_ && !flag) {
+@@ -1391,6 +_,8 @@
+       if (itementity == null) {
+          return null;
+       } else {
++         if (captureDrops() != null) captureDrops().add(itementity);
++         else
+          this.level.addFreshEntity(itementity);
+          ItemStack itemstack = itementity.getItem();
+          if (p_146097_3_) {
+@@ -1402,6 +_,29 @@
+          }
+ 
+          return itementity;
++      }
++   }
++
++   private String language = "en_us";
++   /**
++    * Returns the language last reported by the player as their local language.
++    * Defaults to en_us if the value is unknown.
++    */
++   public String getLanguage() {
++      return this.language;
++   }
++
++   // We need this as tablistDisplayname may be null even if the the event was fired.
++   private boolean hasTabListName = false;
++   private ITextComponent tabListDisplayName = null;
++   /**
++    * Force the name displayed in the tab list to refresh, by firing {@link net.minecraftforge.event.entity.player.PlayerEvent.TabListNameFormat}.
++    */
++   public void refreshTabListName() {
++      ITextComponent oldName = this.tabListDisplayName;
++      this.tabListDisplayName = net.minecraftforge.event.ForgeEventFactory.getPlayerTabListDisplayName(this);
++      if (!java.util.Objects.equals(oldName, this.tabListDisplayName)) {
++         this.getServer().getPlayerList().broadcastAll(new net.minecraft.network.play.server.SPlayerListItemPacket(net.minecraft.network.play.server.SPlayerListItemPacket.Action.UPDATE_DISPLAY_NAME, this));
+       }
+    }
+ 

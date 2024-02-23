@@ -1,0 +1,11 @@
+--- a/net/minecraft/entity/ai/goal/RunAroundLikeCrazyGoal.java
++++ b/net/minecraft/entity/ai/goal/RunAroundLikeCrazyGoal.java
+@@ -54,7 +_,7 @@
+          if (entity instanceof PlayerEntity) {
+             int i = this.horse.getTemper();
+             int j = this.horse.getMaxTemper();
+-            if (j > 0 && this.horse.getRandom().nextInt(j) < i) {
++            if (j > 0 && this.horse.getRandom().nextInt(j) < i && !net.minecraftforge.event.ForgeEventFactory.onAnimalTame(horse, (PlayerEntity)entity)) {
+                this.horse.tameWithName((PlayerEntity)entity);
+                return;
+             }

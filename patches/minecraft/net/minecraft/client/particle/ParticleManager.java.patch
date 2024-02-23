@@ -1,0 +1,97 @@
+--- a/net/minecraft/client/particle/ParticleManager.java
++++ b/net/minecraft/client/particle/ParticleManager.java
+@@ -65,7 +_,7 @@
+    private final Queue<EmitterParticle> trackingEmitters = Queues.newArrayDeque();
+    private final TextureManager textureManager;
+    private final Random random = new Random();
+-   private final Int2ObjectMap<IParticleFactory<?>> providers = new Int2ObjectOpenHashMap<>();
++   private final Map<ResourceLocation, IParticleFactory<?>> providers = new java.util.HashMap<>();
+    private final Queue<Particle> particlesToAdd = Queues.newArrayDeque();
+    private final Map<ResourceLocation, ParticleManager.AnimatedSpriteImpl> spriteSets = Maps.newHashMap();
+    private final AtlasTexture textureAtlas = new AtlasTexture(AtlasTexture.LOCATION_PARTICLES);
+@@ -153,13 +_,13 @@
+    }
+ 
+    public <T extends IParticleData> void register(ParticleType<T> p_199283_1_, IParticleFactory<T> p_199283_2_) {
+-      this.providers.put(Registry.PARTICLE_TYPE.getId(p_199283_1_), p_199283_2_);
++      this.providers.put(Registry.PARTICLE_TYPE.getKey(p_199283_1_), p_199283_2_);
+    }
+ 
+    public <T extends IParticleData> void register(ParticleType<T> p_215234_1_, ParticleManager.IParticleMetaFactory<T> p_215234_2_) {
+       ParticleManager.AnimatedSpriteImpl particlemanager$animatedspriteimpl = new ParticleManager.AnimatedSpriteImpl();
+       this.spriteSets.put(Registry.PARTICLE_TYPE.getKey(p_215234_1_), particlemanager$animatedspriteimpl);
+-      this.providers.put(Registry.PARTICLE_TYPE.getId(p_215234_1_), p_215234_2_.create(particlemanager$animatedspriteimpl));
++      this.providers.put(Registry.PARTICLE_TYPE.getKey(p_215234_1_), p_215234_2_.create(particlemanager$animatedspriteimpl));
+    }
+ 
+    public CompletableFuture<Void> reload(IFutureReloadListener.IStage p_215226_1_, IResourceManager p_215226_2_, IProfiler p_215226_3_, IProfiler p_215226_4_, Executor p_215226_5_, Executor p_215226_6_) {
+@@ -248,7 +_,7 @@
+ 
+    @Nullable
+    private <T extends IParticleData> Particle makeParticle(T p_199927_1_, double p_199927_2_, double p_199927_4_, double p_199927_6_, double p_199927_8_, double p_199927_10_, double p_199927_12_) {
+-      IParticleFactory<T> iparticlefactory = (IParticleFactory<T>)this.providers.get(Registry.PARTICLE_TYPE.getId(p_199927_1_.getType()));
++      IParticleFactory<T> iparticlefactory = (IParticleFactory<T>)this.providers.get(Registry.PARTICLE_TYPE.getKey(p_199927_1_.getType()));
+       return iparticlefactory == null ? null : iparticlefactory.createParticle(p_199927_1_, this.level, p_199927_2_, p_199927_4_, p_199927_6_, p_199927_8_, p_199927_10_, p_199927_12_);
+    }
+ 
+@@ -313,16 +_,29 @@
+       }
+    }
+ 
++   /**@deprecated Forge: use {@link #renderParticles(MatrixStack, IRenderTypeBuffer.Impl, LightTexture, ActiveRenderInfo, float, net.minecraft.client.renderer.culling.ClippingHelper)} with ClippingHelper as additional parameter*/
++   @Deprecated
+    public void render(MatrixStack p_228345_1_, IRenderTypeBuffer.Impl p_228345_2_, LightTexture p_228345_3_, ActiveRenderInfo p_228345_4_, float p_228345_5_) {
++      renderParticles(p_228345_1_, p_228345_2_, p_228345_3_, p_228345_4_, p_228345_5_, null);
++   }
++
++   public void renderParticles(MatrixStack p_228345_1_, IRenderTypeBuffer.Impl p_228345_2_, LightTexture p_228345_3_, ActiveRenderInfo p_228345_4_, float p_228345_5_, @Nullable net.minecraft.client.renderer.culling.ClippingHelper clippingHelper) {
+       p_228345_3_.turnOnLightLayer();
++      Runnable enable = () -> {
+       RenderSystem.enableAlphaTest();
+       RenderSystem.defaultAlphaFunc();
+       RenderSystem.enableDepthTest();
+       RenderSystem.enableFog();
++         RenderSystem.activeTexture(org.lwjgl.opengl.GL13.GL_TEXTURE2);
++         RenderSystem.enableTexture();
++         RenderSystem.activeTexture(org.lwjgl.opengl.GL13.GL_TEXTURE0);
++      };
+       RenderSystem.pushMatrix();
+       RenderSystem.multMatrix(p_228345_1_.last().pose());
+ 
+-      for(IParticleRenderType iparticlerendertype : RENDER_ORDER) {
++      for(IParticleRenderType iparticlerendertype : this.particles.keySet()) { // Forge: allow custom IParticleRenderType's
++         if (iparticlerendertype == IParticleRenderType.NO_RENDER) continue;
++         enable.run(); //Forge: MC-168672 Make sure all render types have the correct GL state.
+          Iterable<Particle> iterable = this.particles.get(iparticlerendertype);
+          if (iterable != null) {
+             RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+@@ -331,6 +_,7 @@
+             iparticlerendertype.begin(bufferbuilder, this.textureManager);
+ 
+             for(Particle particle : iterable) {
++               if (clippingHelper != null && particle.shouldCull() && !clippingHelper.isVisible(particle.getBoundingBox())) continue;
+                try {
+                   particle.render(bufferbuilder, p_228345_4_, p_228345_5_);
+                } catch (Throwable throwable) {
+@@ -362,7 +_,7 @@
+    }
+ 
+    public void destroy(BlockPos p_180533_1_, BlockState p_180533_2_) {
+-      if (!p_180533_2_.isAir()) {
++      if (!p_180533_2_.isAir(this.level, p_180533_1_) && !p_180533_2_.addDestroyEffects(this.level, p_180533_1_, this)) {
+          VoxelShape voxelshape = p_180533_2_.getShape(this.level, p_180533_1_);
+          double d0 = 0.25D;
+          voxelshape.forAllBoxes((p_228348_3_, p_228348_5_, p_228348_7_, p_228348_9_, p_228348_11_, p_228348_13_) -> {
+@@ -432,6 +_,12 @@
+ 
+    public String countParticles() {
+       return String.valueOf(this.particles.values().stream().mapToInt(Collection::size).sum());
++   }
++
++   public void addBlockHitEffects(BlockPos pos, net.minecraft.util.math.BlockRayTraceResult target) {
++      BlockState state = level.getBlockState(pos);
++      if (!state.addHitEffects(level, target, this))
++         crack(pos, target.getDirection());
+    }
+ 
+    @OnlyIn(Dist.CLIENT)

@@ -1,0 +1,59 @@
+--- a/net/minecraft/tags/ITag.java
++++ b/net/minecraft/tags/ITag.java
+@@ -46,6 +_,7 @@
+ 
+    public static class Builder {
+       private final List<ITag.Proxy> entries = Lists.newArrayList();
++      private boolean replace = false;
+ 
+       public static ITag.Builder tag() {
+          return new ITag.Builder();
+@@ -68,6 +_,15 @@
+          return this.add(new ITag.TagEntry(p_232964_1_), p_232964_2_);
+       }
+ 
++      public ITag.Builder replace(boolean value) {
++         this.replace = value;
++         return this;
++      }
++
++      public ITag.Builder replace() {
++         return replace(true);
++      }
++
+       public <T> Optional<ITag<T>> build(Function<ResourceLocation, ITag<T>> p_232959_1_, Function<ResourceLocation, T> p_232959_2_) {
+          ImmutableSet.Builder<T> builder = ImmutableSet.builder();
+ 
+@@ -103,6 +_,7 @@
+             this.entries.clear();
+          }
+ 
++         net.minecraftforge.common.ForgeHooks.deserializeTagAdditions(list, p_232956_1_, entries);
+          list.forEach((p_232958_2_) -> {
+             this.entries.add(new ITag.Proxy(p_232958_2_, p_232956_2_));
+          });
+@@ -138,7 +_,7 @@
+             itag$proxy.getEntry().serializeTo(jsonarray);
+          }
+ 
+-         jsonobject.addProperty("replace", false);
++         jsonobject.addProperty("replace", replace);
+          jsonobject.add("values", jsonarray);
+          return jsonobject;
+       }
+@@ -178,6 +_,7 @@
+       public String toString() {
+          return this.id.toString();
+       }
++      @Override public boolean equals(Object o) { return o == this || (o instanceof ITag.ItemEntry && java.util.Objects.equals(this.id, ((ITag.ItemEntry) o).id)); }
+    }
+ 
+    public static class OptionalItemEntry implements ITag.ITagEntry {
+@@ -278,5 +_,7 @@
+       public String toString() {
+          return "#" + this.id;
+       }
++      @Override public boolean equals(Object o) { return o == this || (o instanceof ITag.TagEntry && java.util.Objects.equals(this.id, ((ITag.TagEntry) o).id)); }
++      public ResourceLocation getId() { return id; }
+    }
+ }

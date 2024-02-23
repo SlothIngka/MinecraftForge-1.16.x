@@ -1,0 +1,43 @@
+--- a/net/minecraft/util/palette/PalettedContainer.java
++++ b/net/minecraft/util/palette/PalettedContainer.java
+@@ -66,8 +_,11 @@
+    }
+ 
+    private void setBits(int p_186012_1_) {
+-      if (p_186012_1_ != this.bits) {
+-         this.bits = p_186012_1_;
++      setBits(p_186012_1_, false);
++   }
++   private void setBits(int bitsIn, boolean forceBits) {
++      if (bitsIn != this.bits) {
++         this.bits = bitsIn;
+          if (this.bits <= 4) {
+             this.bits = 4;
+             this.palette = new ArrayPalette<>(this.registry, this.bits, this, this.reader);
+@@ -76,6 +_,8 @@
+          } else {
+             this.palette = this.globalPalette;
+             this.bits = MathHelper.ceillog2(this.registry.size());
++            if (forceBits)
++               this.bits = bitsIn;
+          }
+ 
+          this.palette.idFor(this.defaultValue);
+@@ -138,12 +_,16 @@
+       this.acquire();
+       int i = p_186010_1_.readByte();
+       if (this.bits != i) {
+-         this.setBits(i);
++         this.setBits(i, true); //Forge, Force bit density to fix network issues, resize below if needed.
+       }
+ 
+       this.palette.read(p_186010_1_);
+       p_186010_1_.readLongArray(this.storage.getRaw());
+       this.release();
++
++      int regSize = MathHelper.ceillog2(this.registry.size());
++      if (this.palette == globalPalette && this.bits != regSize) // Resize bits to fit registry.
++         this.onResize(regSize, defaultValue);
+    }
+ 
+    public void write(PacketBuffer p_186009_1_) {

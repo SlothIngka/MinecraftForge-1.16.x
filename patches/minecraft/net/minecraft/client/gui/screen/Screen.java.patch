@@ -1,0 +1,103 @@
+--- a/net/minecraft/client/gui/screen/Screen.java
++++ b/net/minecraft/client/gui/screen/Screen.java
+@@ -99,7 +_,7 @@
+    }
+ 
+    public void onClose() {
+-      this.minecraft.setScreen((Screen)null);
++      this.minecraft.popGuiLayer();
+    }
+ 
+    protected <T extends Widget> T addButton(T p_230480_1_) {
+@@ -113,7 +_,10 @@
+    }
+ 
+    protected void renderTooltip(MatrixStack p_230457_1_, ItemStack p_230457_2_, int p_230457_3_, int p_230457_4_) {
+-      this.renderComponentTooltip(p_230457_1_, this.getTooltipFromItem(p_230457_2_), p_230457_3_, p_230457_4_);
++      FontRenderer font = p_230457_2_.getItem().getFontRenderer(p_230457_2_);
++      net.minecraftforge.fml.client.gui.GuiUtils.preItemToolTip(p_230457_2_);
++      this.renderWrappedToolTip(p_230457_1_, this.getTooltipFromItem(p_230457_2_), p_230457_3_, p_230457_4_, (font == null ? this.font : font));
++      net.minecraftforge.fml.client.gui.GuiUtils.postItemToolTip();
+    }
+ 
+    public List<ITextComponent> getTooltipFromItem(ItemStack p_231151_1_) {
+@@ -121,14 +_,20 @@
+    }
+ 
+    public void renderTooltip(MatrixStack p_238652_1_, ITextComponent p_238652_2_, int p_238652_3_, int p_238652_4_) {
+-      this.renderTooltip(p_238652_1_, Arrays.asList(p_238652_2_.getVisualOrderText()), p_238652_3_, p_238652_4_);
++      this.renderComponentTooltip(p_238652_1_, Arrays.asList(p_238652_2_), p_238652_3_, p_238652_4_);
+    }
+ 
+    public void renderComponentTooltip(MatrixStack p_243308_1_, List<ITextComponent> p_243308_2_, int p_243308_3_, int p_243308_4_) {
+-      this.renderTooltip(p_243308_1_, Lists.transform(p_243308_2_, ITextComponent::getVisualOrderText), p_243308_3_, p_243308_4_);
++      this.renderWrappedToolTip(p_243308_1_, p_243308_2_, p_243308_3_, p_243308_4_, font);
++   }
++   public void renderWrappedToolTip(MatrixStack matrixStack, List<? extends net.minecraft.util.text.ITextProperties> tooltips, int mouseX, int mouseY, FontRenderer font) {
++      net.minecraftforge.fml.client.gui.GuiUtils.drawHoveringText(matrixStack, tooltips, mouseX, mouseY, width, height, -1, font);
+    }
+ 
+    public void renderTooltip(MatrixStack p_238654_1_, List<? extends IReorderingProcessor> p_238654_2_, int p_238654_3_, int p_238654_4_) {
++      this.renderToolTip(p_238654_1_, p_238654_2_, p_238654_3_, p_238654_4_, font);
++   }
++   public void renderToolTip(MatrixStack p_238654_1_, List<? extends IReorderingProcessor> p_238654_2_, int p_238654_3_, int p_238654_4_, FontRenderer font) {
+       if (!p_238654_2_.isEmpty()) {
+          int i = 0;
+ 
+@@ -289,9 +_,12 @@
+    }
+ 
+    public void sendMessage(String p_231159_1_, boolean p_231159_2_) {
++      p_231159_1_ = net.minecraftforge.event.ForgeEventFactory.onClientSendMessage(p_231159_1_);
++      if (p_231159_1_.isEmpty()) return;
+       if (p_231159_2_) {
+          this.minecraft.gui.getChat().addRecentChat(p_231159_1_);
+       }
++      //if (net.minecraftforge.client.ClientCommandHandler.instance.executeCommand(mc.player, msg) != 0) return; //Forge: TODO Client command re-write
+ 
+       this.minecraft.player.chat(p_231159_1_);
+    }
+@@ -302,10 +_,17 @@
+       this.font = p_231158_1_.font;
+       this.width = p_231158_2_;
+       this.height = p_231158_3_;
++      java.util.function.Consumer<Widget> remove = (b) -> {
++         buttons.remove(b);
++         children.remove(b);
++      };
++      if (!net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.GuiScreenEvent.InitGuiEvent.Pre(this, this.buttons, this::addButton, remove))) {
+       this.buttons.clear();
+       this.children.clear();
+       this.setFocused((IGuiEventListener)null);
+       this.init();
++      }
++      net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.GuiScreenEvent.InitGuiEvent.Post(this, this.buttons, this::addButton, remove));
+    }
+ 
+    public List<? extends IGuiEventListener> children() {
+@@ -328,6 +_,7 @@
+    public void renderBackground(MatrixStack p_238651_1_, int p_238651_2_) {
+       if (this.minecraft.level != null) {
+          this.fillGradient(p_238651_1_, 0, 0, this.width, this.height, -1072689136, -804253680);
++         net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.GuiScreenEvent.BackgroundDrawnEvent(this, p_238651_1_));
+       } else {
+          this.renderDirtBackground(p_238651_2_);
+       }
+@@ -346,6 +_,7 @@
+       bufferbuilder.vertex((double)this.width, 0.0D, 0.0D).uv((float)this.width / 32.0F, (float)p_231165_1_).color(64, 64, 64, 255).endVertex();
+       bufferbuilder.vertex(0.0D, 0.0D, 0.0D).uv(0.0F, (float)p_231165_1_).color(64, 64, 64, 255).endVertex();
+       tessellator.end();
++      net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.GuiScreenEvent.BackgroundDrawnEvent(this, new MatrixStack()));
+    }
+ 
+    public boolean isPauseScreen() {
+@@ -431,5 +_,9 @@
+    }
+ 
+    public void onFilesDrop(List<Path> p_230476_1_) {
++   }
++
++   public Minecraft getMinecraft() {
++      return this.minecraft;
+    }
+ }

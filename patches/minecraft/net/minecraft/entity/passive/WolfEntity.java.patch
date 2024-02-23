@@ -1,0 +1,19 @@
+--- a/net/minecraft/entity/passive/WolfEntity.java
++++ b/net/minecraft/entity/passive/WolfEntity.java
+@@ -133,6 +_,7 @@
+          this.setCollarColor(DyeColor.byId(p_70037_1_.getInt("CollarColor")));
+       }
+ 
++      if(!level.isClientSide) //FORGE: allow this entity to be read from nbt on client. (Fixes MC-189565)
+       this.readPersistentAngerSaveData((ServerWorld)this.level, p_70037_1_);
+    }
+ 
+@@ -347,7 +_,7 @@
+                itemstack.shrink(1);
+             }
+ 
+-            if (this.random.nextInt(3) == 0) {
++            if (this.random.nextInt(3) == 0 && !net.minecraftforge.event.ForgeEventFactory.onAnimalTame(this, p_230254_1_)) {
+                this.tame(p_230254_1_);
+                this.navigation.stop();
+                this.setTarget((LivingEntity)null);

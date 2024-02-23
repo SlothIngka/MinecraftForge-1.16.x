@@ -1,0 +1,23 @@
+--- a/net/minecraft/entity/item/minecart/FurnaceMinecartEntity.java
++++ b/net/minecraft/entity/item/minecart/FurnaceMinecartEntity.java
+@@ -72,6 +_,11 @@
+       return 0.2D;
+    }
+ 
++   @Override
++   public float getMaxCartSpeedOnRail() {
++      return 0.2f;
++   }
++
+    public void destroy(DamageSource p_94095_1_) {
+       super.destroy(p_94095_1_);
+       if (!p_94095_1_.isExplosion() && this.level.getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
+@@ -111,6 +_,8 @@
+    }
+ 
+    public ActionResultType interact(PlayerEntity p_184230_1_, Hand p_184230_2_) {
++      ActionResultType ret = super.interact(p_184230_1_, p_184230_2_);
++      if (ret.consumesAction()) return ret;
+       ItemStack itemstack = p_184230_1_.getItemInHand(p_184230_2_);
+       if (INGREDIENT.test(itemstack) && this.fuel + 3600 <= 32000) {
+          if (!p_184230_1_.abilities.instabuild) {

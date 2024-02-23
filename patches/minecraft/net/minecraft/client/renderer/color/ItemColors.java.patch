@@ -1,0 +1,33 @@
+--- a/net/minecraft/client/renderer/color/ItemColors.java
++++ b/net/minecraft/client/renderer/color/ItemColors.java
+@@ -22,7 +_,8 @@
+ 
+ @OnlyIn(Dist.CLIENT)
+ public class ItemColors {
+-   private final ObjectIntIdentityMap<IItemColor> itemColors = new ObjectIntIdentityMap<>(32);
++   // FORGE: Use RegistryDelegates as non-Vanilla item ids are not constant
++   private final java.util.Map<net.minecraftforge.registries.IRegistryDelegate<Item>, IItemColor> itemColors = new java.util.HashMap<>();
+ 
+    public static ItemColors createDefault(BlockColors p_186729_0_) {
+       ItemColors itemcolors = new ItemColors();
+@@ -82,17 +_,18 @@
+       itemcolors.register((p_210237_0_, p_210237_1_) -> {
+          return p_210237_1_ == 0 ? -1 : FilledMapItem.getColor(p_210237_0_);
+       }, Items.FILLED_MAP);
++      net.minecraftforge.client.ForgeHooksClient.onItemColorsInit(itemcolors, p_186729_0_);
+       return itemcolors;
+    }
+ 
+    public int getColor(ItemStack p_186728_1_, int p_186728_2_) {
+-      IItemColor iitemcolor = this.itemColors.byId(Registry.ITEM.getId(p_186728_1_.getItem()));
++      IItemColor iitemcolor = this.itemColors.get(p_186728_1_.getItem().delegate);
+       return iitemcolor == null ? -1 : iitemcolor.getColor(p_186728_1_, p_186728_2_);
+    }
+ 
+    public void register(IItemColor p_199877_1_, IItemProvider... p_199877_2_) {
+       for(IItemProvider iitemprovider : p_199877_2_) {
+-         this.itemColors.addMapping(p_199877_1_, Item.getId(iitemprovider.asItem()));
++         this.itemColors.put(iitemprovider.asItem().delegate, p_199877_1_);
+       }
+ 
+    }

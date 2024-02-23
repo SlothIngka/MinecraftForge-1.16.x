@@ -1,0 +1,11 @@
+--- a/net/minecraft/entity/passive/horse/HorseEntity.java
++++ b/net/minecraft/entity/passive/horse/HorseEntity.java
+@@ -139,6 +_,8 @@
+          this.playSound(SoundEvents.HORSE_BREATHE, p_190680_1_.getVolume() * 0.6F, p_190680_1_.getPitch());
+       }
+ 
++      ItemStack stack = this.inventory.getItem(1);
++      if (isArmor(stack)) stack.onHorseArmorTick(level, this);
+    }
+ 
+    protected SoundEvent getAmbientSound() {

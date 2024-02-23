@@ -1,0 +1,19 @@
+--- a/net/minecraft/advancements/Advancement.java
++++ b/net/minecraft/advancements/Advancement.java
+@@ -130,7 +_,7 @@
+       return this.chatComponent;
+    }
+ 
+-   public static class Builder {
++   public static class Builder implements net.minecraftforge.common.extensions.IForgeAdvancementBuilder {
+       private ResourceLocation parentId;
+       private Advancement parent;
+       private DisplayInfo display;
+@@ -309,6 +_,7 @@
+       }
+ 
+       public static Advancement.Builder fromJson(JsonObject p_241043_0_, ConditionArrayParser p_241043_1_) {
++         if ((p_241043_0_ = net.minecraftforge.common.crafting.ConditionalAdvancement.processConditional(p_241043_0_)) == null) return null;
+          ResourceLocation resourcelocation = p_241043_0_.has("parent") ? new ResourceLocation(JSONUtils.getAsString(p_241043_0_, "parent")) : null;
+          DisplayInfo displayinfo = p_241043_0_.has("display") ? DisplayInfo.fromJson(JSONUtils.getAsJsonObject(p_241043_0_, "display")) : null;
+          AdvancementRewards advancementrewards = p_241043_0_.has("rewards") ? AdvancementRewards.deserialize(JSONUtils.getAsJsonObject(p_241043_0_, "rewards")) : AdvancementRewards.EMPTY;

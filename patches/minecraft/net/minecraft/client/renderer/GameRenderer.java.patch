@@ -1,0 +1,78 @@
+--- a/net/minecraft/client/renderer/GameRenderer.java
++++ b/net/minecraft/client/renderer/GameRenderer.java
+@@ -135,6 +_,8 @@
+          this.loadEffect(new ResourceLocation("shaders/post/spider.json"));
+       } else if (p_175066_1_ instanceof EndermanEntity) {
+          this.loadEffect(new ResourceLocation("shaders/post/invert.json"));
++      } else {
++         net.minecraftforge.client.ForgeHooksClient.loadEntityShader(p_175066_1_, this);
+       }
+ 
+    }
+@@ -310,7 +_,7 @@
+             d0 = d0 * 60.0D / 70.0D;
+          }
+ 
+-         return d0;
++         return net.minecraftforge.client.ForgeHooksClient.getFOVModifier(this, p_215311_1_, p_215311_2_, d0);
+       }
+    }
+ 
+@@ -439,6 +_,7 @@
+                RenderSystem.loadIdentity();
+                this.postEffect.process(p_195458_1_);
+                RenderSystem.popMatrix();
++               RenderSystem.enableTexture(); //FORGE: Fix MC-194675
+             }
+ 
+             this.minecraft.getMainRenderTarget().bindWrite(true);
+@@ -448,10 +_,10 @@
+          RenderSystem.clear(256, Minecraft.ON_OSX);
+          RenderSystem.matrixMode(5889);
+          RenderSystem.loadIdentity();
+-         RenderSystem.ortho(0.0D, (double)mainwindow.getWidth() / mainwindow.getGuiScale(), (double)mainwindow.getHeight() / mainwindow.getGuiScale(), 0.0D, 1000.0D, 3000.0D);
++         RenderSystem.ortho(0.0D, (double)mainwindow.getWidth() / mainwindow.getGuiScale(), (double)mainwindow.getHeight() / mainwindow.getGuiScale(), 0.0D, 1000.0D, net.minecraftforge.client.ForgeHooksClient.getGuiFarPlane());
+          RenderSystem.matrixMode(5888);
+          RenderSystem.loadIdentity();
+-         RenderSystem.translatef(0.0F, 0.0F, -2000.0F);
++         RenderSystem.translatef(0.0F, 0.0F, 1000.0F - net.minecraftforge.client.ForgeHooksClient.getGuiFarPlane());
+          RenderHelper.setupFor3DItems();
+          MatrixStack matrixstack = new MatrixStack();
+          if (p_195458_4_ && this.minecraft.level != null) {
+@@ -486,7 +_,7 @@
+             }
+          } else if (this.minecraft.screen != null) {
+             try {
+-               this.minecraft.screen.render(matrixstack, i, j, this.minecraft.getDeltaFrameTime());
++               net.minecraftforge.client.ForgeHooksClient.drawScreen(this.minecraft.screen, matrixstack, i, j, this.minecraft.getDeltaFrameTime());
+             } catch (Throwable throwable) {
+                CrashReport crashreport1 = CrashReport.forThrowable(throwable, "Rendering screen");
+                CrashReportCategory crashreportcategory1 = crashreport1.addCategory("Screen render details");
+@@ -595,9 +_,16 @@
+       Matrix4f matrix4f = matrixstack.last().pose();
+       this.resetProjectionMatrix(matrix4f);
+       activerenderinfo.setup(this.minecraft.level, (Entity)(this.minecraft.getCameraEntity() == null ? this.minecraft.player : this.minecraft.getCameraEntity()), !this.minecraft.options.getCameraType().isFirstPerson(), this.minecraft.options.getCameraType().isMirrored(), p_228378_1_);
++
++      net.minecraftforge.client.event.EntityViewRenderEvent.CameraSetup cameraSetup = net.minecraftforge.client.ForgeHooksClient.onCameraSetup(this, activerenderinfo, p_228378_1_);
++      activerenderinfo.setAnglesInternal(cameraSetup.getYaw(), cameraSetup.getPitch());
++      p_228378_4_.mulPose(Vector3f.ZP.rotationDegrees(cameraSetup.getRoll()));
++
+       p_228378_4_.mulPose(Vector3f.XP.rotationDegrees(activerenderinfo.getXRot()));
+       p_228378_4_.mulPose(Vector3f.YP.rotationDegrees(activerenderinfo.getYRot() + 180.0F));
+       this.minecraft.levelRenderer.renderLevel(p_228378_4_, p_228378_1_, p_228378_2_, flag, activerenderinfo, this, this.lightTexture, matrix4f);
++      this.minecraft.getProfiler().popPush("forge_render_last");
++      net.minecraftforge.client.ForgeHooksClient.dispatchRenderLast(this.minecraft.levelRenderer, p_228378_4_, p_228378_1_, matrix4f, p_228378_2_);
+       this.minecraft.getProfiler().popPush("hand");
+       if (this.renderHand) {
+          RenderSystem.clear(256, Minecraft.ON_OSX);
+@@ -708,5 +_,10 @@
+ 
+    public OverlayTexture overlayTexture() {
+       return this.overlayTexture;
++   }
++
++   @Override
++   public net.minecraftforge.resource.IResourceType getResourceType() {
++      return net.minecraftforge.resource.VanillaResourceType.SHADERS;
+    }
+ }

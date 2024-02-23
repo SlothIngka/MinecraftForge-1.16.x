@@ -1,0 +1,80 @@
+--- a/net/minecraft/entity/monster/EndermanEntity.java
++++ b/net/minecraft/entity/monster/EndermanEntity.java
+@@ -98,7 +_,6 @@
+    }
+ 
+    public void setTarget(@Nullable LivingEntity p_70624_1_) {
+-      super.setTarget(p_70624_1_);
+       ModifiableAttributeInstance modifiableattributeinstance = this.getAttribute(Attributes.MOVEMENT_SPEED);
+       if (p_70624_1_ == null) {
+          this.targetChangeTime = 0;
+@@ -113,6 +_,7 @@
+          }
+       }
+ 
++      super.setTarget(p_70624_1_); //Forge: Moved down to allow event handlers to write data manager values.
+    }
+ 
+    protected void defineSynchedData() {
+@@ -181,12 +_,13 @@
+       }
+ 
+       this.setCarriedBlock(blockstate);
++      if(!level.isClientSide) //FORGE: allow this entity to be read from nbt on client. (Fixes MC-189565)
+       this.readPersistentAngerSaveData((ServerWorld)this.level, p_70037_1_);
+    }
+ 
+    private boolean isLookingAtMe(PlayerEntity p_70821_1_) {
+       ItemStack itemstack = p_70821_1_.inventory.armor.get(3);
+-      if (itemstack.getItem() == Blocks.CARVED_PUMPKIN.asItem()) {
++      if (itemstack.isEnderMask(p_70821_1_, this)) {
+          return false;
+       } else {
+          Vector3d vector3d = p_70821_1_.getViewVector(1.0F).normalize();
+@@ -265,7 +_,9 @@
+       boolean flag = blockstate.getMaterial().blocksMotion();
+       boolean flag1 = blockstate.getFluidState().is(FluidTags.WATER);
+       if (flag && !flag1) {
+-         boolean flag2 = this.randomTeleport(p_70825_1_, p_70825_3_, p_70825_5_, true);
++         net.minecraftforge.event.entity.living.EntityTeleportEvent.EnderEntity event = net.minecraftforge.event.ForgeEventFactory.onEnderTeleport(this, p_70825_1_, p_70825_3_, p_70825_5_);
++         if (event.isCanceled()) return false;
++         boolean flag2 = this.randomTeleport(event.getTargetX(), event.getTargetY(), event.getTargetZ(), true);
+          if (flag2 && !this.isSilent()) {
+             this.level.playSound((PlayerEntity)null, this.xo, this.yo, this.zo, SoundEvents.ENDERMAN_TELEPORT, this.getSoundSource(), 1.0F, 1.0F);
+             this.playSound(SoundEvents.ENDERMAN_TELEPORT, 1.0F, 1.0F);
+@@ -429,7 +_,7 @@
+       public boolean canUse() {
+          if (this.enderman.getCarriedBlock() == null) {
+             return false;
+-         } else if (!this.enderman.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
++         } else if (!net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.enderman.level, this.enderman)) {
+             return false;
+          } else {
+             return this.enderman.getRandom().nextInt(2000) == 0;
+@@ -449,7 +_,7 @@
+          BlockState blockstate2 = this.enderman.getCarriedBlock();
+          if (blockstate2 != null) {
+             blockstate2 = Block.updateFromNeighbourShapes(blockstate2, this.enderman.level, blockpos);
+-            if (this.canPlaceBlock(world, blockpos, blockstate2, blockstate, blockstate1, blockpos1)) {
++            if (this.canPlaceBlock(world, blockpos, blockstate2, blockstate, blockstate1, blockpos1) && !net.minecraftforge.event.ForgeEventFactory.onBlockPlace(enderman, net.minecraftforge.common.util.BlockSnapshot.create(world.dimension(), world, blockpos1), net.minecraft.util.Direction.UP)) {
+                world.setBlock(blockpos, blockstate2, 3);
+                this.enderman.setCarriedBlock((BlockState)null);
+             }
+@@ -458,7 +_,7 @@
+       }
+ 
+       private boolean canPlaceBlock(World p_220836_1_, BlockPos p_220836_2_, BlockState p_220836_3_, BlockState p_220836_4_, BlockState p_220836_5_, BlockPos p_220836_6_) {
+-         return p_220836_4_.isAir() && !p_220836_5_.isAir() && !p_220836_5_.is(Blocks.BEDROCK) && p_220836_5_.isCollisionShapeFullBlock(p_220836_1_, p_220836_6_) && p_220836_3_.canSurvive(p_220836_1_, p_220836_2_) && p_220836_1_.getEntities(this.enderman, AxisAlignedBB.unitCubeFromLowerCorner(Vector3d.atLowerCornerOf(p_220836_2_))).isEmpty();
++         return p_220836_4_.isAir(p_220836_1_, p_220836_2_) && !p_220836_5_.isAir(p_220836_1_, p_220836_6_) && !p_220836_5_.is(Blocks.BEDROCK) && !p_220836_5_.is(net.minecraftforge.common.Tags.Blocks.ENDERMAN_PLACE_ON_BLACKLIST) && p_220836_5_.isCollisionShapeFullBlock(p_220836_1_, p_220836_6_) && p_220836_3_.canSurvive(p_220836_1_, p_220836_2_) && p_220836_1_.getEntities(this.enderman, AxisAlignedBB.unitCubeFromLowerCorner(Vector3d.atLowerCornerOf(p_220836_2_))).isEmpty();
+       }
+    }
+ 
+@@ -500,7 +_,7 @@
+       public boolean canUse() {
+          if (this.enderman.getCarriedBlock() != null) {
+             return false;
+-         } else if (!this.enderman.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
++         } else if (!net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.enderman.level, this.enderman)) {
+             return false;
+          } else {
+             return this.enderman.getRandom().nextInt(20) == 0;

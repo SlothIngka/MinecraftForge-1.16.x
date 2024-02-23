@@ -1,0 +1,35 @@
+--- a/net/minecraft/network/handshake/client/CHandshakePacket.java
++++ b/net/minecraft/network/handshake/client/CHandshakePacket.java
+@@ -14,6 +_,7 @@
+    private String hostName;
+    private int port;
+    private ProtocolType intention;
++   private String fmlVersion = net.minecraftforge.fml.network.FMLNetworkConstants.NETVERSION;
+ 
+    public CHandshakePacket() {
+    }
+@@ -31,11 +_,13 @@
+       this.hostName = p_148837_1_.readUtf(255);
+       this.port = p_148837_1_.readUnsignedShort();
+       this.intention = ProtocolType.getById(p_148837_1_.readVarInt());
++      this.fmlVersion = net.minecraftforge.fml.network.NetworkHooks.getFMLVersion(this.hostName);
++      this.hostName = this.hostName.split("\0")[0];
+    }
+ 
+    public void write(PacketBuffer p_148840_1_) throws IOException {
+       p_148840_1_.writeVarInt(this.protocolVersion);
+-      p_148840_1_.writeUtf(this.hostName);
++      p_148840_1_.writeUtf(this.hostName + "\0"+net.minecraftforge.fml.network.FMLNetworkConstants.NETVERSION+"\0");
+       p_148840_1_.writeShort(this.port);
+       p_148840_1_.writeVarInt(this.intention.getId());
+    }
+@@ -50,5 +_,9 @@
+ 
+    public int getProtocolVersion() {
+       return this.protocolVersion;
++   }
++
++   public String getFMLVersion() {
++      return this.fmlVersion;
+    }
+ }

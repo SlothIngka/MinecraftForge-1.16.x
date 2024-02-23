@@ -1,0 +1,11 @@
+--- a/net/minecraft/entity/monster/EvokerEntity.java
++++ b/net/minecraft/entity/monster/EvokerEntity.java
+@@ -280,7 +_,7 @@
+             return false;
+          } else if (EvokerEntity.this.tickCount < this.nextAttackTickCount) {
+             return false;
+-         } else if (!EvokerEntity.this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
++         } else if (!net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(EvokerEntity.this.level, EvokerEntity.this)) {
+             return false;
+          } else {
+             List<SheepEntity> list = EvokerEntity.this.level.getNearbyEntities(SheepEntity.class, this.wololoTargeting, EvokerEntity.this, EvokerEntity.this.getBoundingBox().inflate(16.0D, 4.0D, 16.0D));

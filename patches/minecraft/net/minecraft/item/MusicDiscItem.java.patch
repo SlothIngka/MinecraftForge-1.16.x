@@ -1,0 +1,49 @@
+--- a/net/minecraft/item/MusicDiscItem.java
++++ b/net/minecraft/item/MusicDiscItem.java
+@@ -22,15 +_,38 @@
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+ public class MusicDiscItem extends Item {
++   @Deprecated // Forge: refer to WorldRender#playRecord. Modders: there's no need to reflectively modify this map!
+    private static final Map<SoundEvent, MusicDiscItem> BY_NAME = Maps.newHashMap();
+    private final int analogOutput;
++   @Deprecated // Forge: refer to soundSupplier
+    private final SoundEvent sound;
++   private final java.util.function.Supplier<SoundEvent> soundSupplier;
+ 
++   @Deprecated // Forge: Use the constructor that takes a supplier instead
+    public MusicDiscItem(int p_i48475_1_, SoundEvent p_i48475_2_, Item.Properties p_i48475_3_) {
+       super(p_i48475_3_);
+       this.analogOutput = p_i48475_1_;
+       this.sound = p_i48475_2_;
+       BY_NAME.put(this.sound, this);
++      this.soundSupplier = this.sound.delegate;
++   }
++
++   /**
++    * For mod use, allows to create a music disc without having to create a new
++    * SoundEvent before their registry event is fired.
++    *
++    * @param comparatorValue The value this music disc should output on the comparator. Must be between 0 and 15.
++    * @param soundSupplier A supplier that provides the sound that should be played. Use a
++    *                      {@link net.minecraftforge.fml.RegistryObject}{@code <SoundEvent>} or a
++    *                      {@link net.minecraftforge.registries.IRegistryDelegate} for this parameter.
++    * @param builder A set of {@link Item.Properties} that describe this item.
++    */
++   public MusicDiscItem(int comparatorValue, java.util.function.Supplier<SoundEvent> soundSupplier, Item.Properties builder)
++   {
++      super(builder);
++      this.analogOutput = comparatorValue;
++      this.sound = null;
++      this.soundSupplier = soundSupplier;
+    }
+ 
+    public ActionResultType useOn(ItemUseContext p_195939_1_) {
+@@ -77,6 +_,6 @@
+ 
+    @OnlyIn(Dist.CLIENT)
+    public SoundEvent getSound() {
+-      return this.sound;
++      return this.soundSupplier.get();
+    }
+ }

@@ -1,0 +1,29 @@
+--- a/net/minecraft/world/gen/FlatGenerationSettings.java
++++ b/net/minecraft/world/gen/FlatGenerationSettings.java
+@@ -147,8 +_,16 @@
+          biomegenerationsettings$builder.addFeature(GenerationStage.Decoration.LAKES, Features.LAKE_LAVA);
+       }
+ 
++      Map<Structure<?>, StructureFeature<?, ?>> map = new java.util.HashMap<>(STRUCTURE_FEATURES);
++      net.minecraft.util.registry.WorldGenRegistries.CONFIGURED_STRUCTURE_FEATURE.stream().filter(f -> !map.containsKey(f.feature)).forEach(f -> map.put(f.feature, f));
+       for(Entry<Structure<?>, StructureSeparationSettings> entry : this.structureSettings.structureConfig().entrySet()) {
+-         biomegenerationsettings$builder.addStructureStart(biomegenerationsettings.withBiomeConfig(STRUCTURE_FEATURES.get(entry.getKey())));
++         if (!map.containsKey(entry.getKey())) {
++            LOGGER.error("FORGE: There's no known StructureFeature for {} when preparing the {} flatworld biome." +
++                    " The structure will be skipped and may not spawn." +
++                    " Please register your StructureFeatures in the WorldGenRegistries!", entry.getKey().getFeatureName(), biome.getRegistryName());
++            continue;
++         }
++         biomegenerationsettings$builder.addStructureStart(biomegenerationsettings.withBiomeConfig(map.get(entry.getKey())));
+       }
+ 
+       boolean flag = (!this.voidGen || this.biomes.getResourceKey(biome).equals(Optional.of(Biomes.THE_VOID))) && this.decoration;
+@@ -174,7 +_,7 @@
+          }
+       }
+ 
+-      return (new Biome.Builder()).precipitation(biome.getPrecipitation()).biomeCategory(biome.getBiomeCategory()).depth(biome.getDepth()).scale(biome.getScale()).temperature(biome.getBaseTemperature()).downfall(biome.getDownfall()).specialEffects(biome.getSpecialEffects()).generationSettings(biomegenerationsettings$builder.build()).mobSpawnSettings(biome.getMobSettings()).build();
++      return (new Biome.Builder()).precipitation(biome.getPrecipitation()).biomeCategory(biome.getBiomeCategory()).depth(biome.getDepth()).scale(biome.getScale()).temperature(biome.getBaseTemperature()).downfall(biome.getDownfall()).specialEffects(biome.getSpecialEffects()).generationSettings(biomegenerationsettings$builder.build()).mobSpawnSettings(biome.getMobSettings()).build().setRegistryName(biome.getRegistryName());
+    }
+ 
+    public DimensionStructuresSettings structureSettings() {

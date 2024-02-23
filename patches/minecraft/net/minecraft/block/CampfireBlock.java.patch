@@ -1,0 +1,20 @@
+--- a/net/minecraft/block/CampfireBlock.java
++++ b/net/minecraft/block/CampfireBlock.java
+@@ -181,7 +_,7 @@
+    public void onProjectileHit(World p_220066_1_, BlockState p_220066_2_, BlockRayTraceResult p_220066_3_, ProjectileEntity p_220066_4_) {
+       if (!p_220066_1_.isClientSide && p_220066_4_.isOnFire()) {
+          Entity entity = p_220066_4_.getOwner();
+-         boolean flag = entity == null || entity instanceof PlayerEntity || p_220066_1_.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING);
++         boolean flag = entity == null || entity instanceof PlayerEntity || net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(p_220066_1_, entity);
+          if (flag && !p_220066_2_.getValue(LIT) && !p_220066_2_.getValue(WATERLOGGED)) {
+             BlockPos blockpos = p_220066_3_.getBlockPos();
+             p_220066_1_.setBlock(blockpos, p_220066_2_.setValue(BlockStateProperties.LIT, Boolean.valueOf(true)), 11);
+@@ -208,7 +_,7 @@
+             return true;
+          }
+ 
+-         boolean flag = VoxelShapes.joinIsNotEmpty(VIRTUAL_FENCE_POST, blockstate.getCollisionShape(p_235474_0_, p_235474_1_, ISelectionContext.empty()), IBooleanFunction.AND);
++         boolean flag = VoxelShapes.joinIsNotEmpty(VIRTUAL_FENCE_POST, blockstate.getCollisionShape(p_235474_0_, blockpos, ISelectionContext.empty()), IBooleanFunction.AND);//Forge fix: MC-201374
+          if (flag) {
+             BlockState blockstate1 = p_235474_0_.getBlockState(blockpos.below());
+             return isLitCampfire(blockstate1);

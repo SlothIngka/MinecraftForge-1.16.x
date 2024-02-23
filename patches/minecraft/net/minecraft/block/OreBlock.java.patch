@@ -1,0 +1,19 @@
+--- a/net/minecraft/block/OreBlock.java
++++ b/net/minecraft/block/OreBlock.java
+@@ -31,12 +_,10 @@
+ 
+    public void spawnAfterBreak(BlockState p_220062_1_, ServerWorld p_220062_2_, BlockPos p_220062_3_, ItemStack p_220062_4_) {
+       super.spawnAfterBreak(p_220062_1_, p_220062_2_, p_220062_3_, p_220062_4_);
+-      if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.SILK_TOUCH, p_220062_4_) == 0) {
+-         int i = this.xpOnDrop(p_220062_2_.random);
+-         if (i > 0) {
+-            this.popExperience(p_220062_2_, p_220062_3_, i);
+-         }
+-      }
++   }
+ 
++   @Override
++   public int getExpDrop(BlockState state, net.minecraft.world.IWorldReader reader, BlockPos pos, int fortune, int silktouch) {
++      return silktouch == 0 ? this.xpOnDrop(RANDOM) : 0;
+    }
+ }

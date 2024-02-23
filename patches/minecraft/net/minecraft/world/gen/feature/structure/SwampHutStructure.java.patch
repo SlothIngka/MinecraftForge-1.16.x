@@ -1,0 +1,18 @@
+--- a/net/minecraft/world/gen/feature/structure/SwampHutStructure.java
++++ b/net/minecraft/world/gen/feature/structure/SwampHutStructure.java
+@@ -24,11 +_,13 @@
+       return SwampHutStructure.Start::new;
+    }
+ 
+-   public List<MobSpawnInfo.Spawners> getSpecialEnemies() {
++   @Override
++   public List<MobSpawnInfo.Spawners> getDefaultSpawnList() {
+       return SWAMPHUT_ENEMIES;
+    }
+ 
+-   public List<MobSpawnInfo.Spawners> getSpecialAnimals() {
++   @Override
++   public List<MobSpawnInfo.Spawners> getDefaultCreatureSpawnList() {
+       return SWAMPHUT_ANIMALS;
+    }
+ 

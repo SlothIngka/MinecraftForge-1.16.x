@@ -1,0 +1,11 @@
+--- a/net/minecraft/entity/projectile/FireballEntity.java
++++ b/net/minecraft/entity/projectile/FireballEntity.java
+@@ -32,7 +_,7 @@
+    protected void onHit(RayTraceResult p_70227_1_) {
+       super.onHit(p_70227_1_);
+       if (!this.level.isClientSide) {
+-         boolean flag = this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING);
++         boolean flag = net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.level, this.getOwner());
+          this.level.explode((Entity)null, this.getX(), this.getY(), this.getZ(), (float)this.explosionPower, flag, flag ? Explosion.Mode.DESTROY : Explosion.Mode.NONE);
+          this.remove();
+       }

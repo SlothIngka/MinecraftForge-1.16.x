@@ -1,0 +1,11 @@
+--- a/net/minecraft/network/play/client/CClickWindowPacket.java
++++ b/net/minecraft/network/play/client/CClickWindowPacket.java
+@@ -49,7 +_,7 @@
+       p_148840_1_.writeByte(this.buttonNum);
+       p_148840_1_.writeShort(this.uid);
+       p_148840_1_.writeEnum(this.clickType);
+-      p_148840_1_.writeItem(this.itemStack);
++      p_148840_1_.writeItemStack(this.itemStack, false); //Forge: Include full tag for C->S
+    }
+ 
+    public int getContainerId() {

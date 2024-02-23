@@ -1,0 +1,64 @@
+--- a/net/minecraft/util/math/vector/TransformationMatrix.java
++++ b/net/minecraft/util/math/vector/TransformationMatrix.java
+@@ -9,7 +_,7 @@
+ import org.apache.commons.lang3.tuple.Triple;
+ 
+ @OnlyIn(Dist.CLIENT)
+-public final class TransformationMatrix {
++public final class TransformationMatrix implements net.minecraftforge.client.extensions.IForgeTransformationMatrix {
+    private final Matrix4f matrix;
+    private boolean decomposed;
+    @Nullable
+@@ -50,14 +_,17 @@
+       return IDENTITY;
+    }
+ 
+-   public TransformationMatrix compose(TransformationMatrix p_227985_1_) {
++   // FORGE: The methods below are not actually unused. To avoid FG6 reobfuscating the compose/inverse
++   // methods in IForgeTransformationMatrix, we rename the vanilla methods, and inject the original
++   // names at runtime via coremod (add_bouncer_method.js). The bouncers will call these methods.
++   private TransformationMatrix composeVanilla(TransformationMatrix p_227985_1_) {
+       Matrix4f matrix4f = this.getMatrix();
+       matrix4f.multiply(p_227985_1_.getMatrix());
+       return new TransformationMatrix(matrix4f);
+    }
+ 
+    @Nullable
+-   public TransformationMatrix inverse() {
++   private TransformationMatrix inverseVanilla() {
+       if (this == IDENTITY) {
+          return this;
+       } else {
+@@ -133,4 +_,32 @@
+    public int hashCode() {
+       return Objects.hash(this.matrix);
+    }
++
++    // FORGE START
++    public Vector3f getTranslation() {
++        ensureDecomposed();
++        return translation.copy();
++    }
++    public Vector3f getScale() {
++        ensureDecomposed();
++        return scale.copy();
++    }
++
++    public Quaternion getRightRot() {
++        ensureDecomposed();
++        return rightRotation.copy();
++    }
++
++    private Matrix3f normalTransform = null;
++    public Matrix3f getNormalMatrix() {
++        checkNormalTransform();
++        return normalTransform;
++    }
++    private void checkNormalTransform() {
++        if (normalTransform == null) {
++            normalTransform = new Matrix3f(matrix);
++            normalTransform.invert();
++            normalTransform.transpose();
++        }
++    }
+ }

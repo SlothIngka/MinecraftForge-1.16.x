@@ -1,0 +1,20 @@
+--- a/net/minecraft/entity/monster/SilverfishEntity.java
++++ b/net/minecraft/entity/monster/SilverfishEntity.java
+@@ -134,7 +_,7 @@
+             return false;
+          } else {
+             Random random = this.mob.getRandom();
+-            if (this.mob.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING) && random.nextInt(10) == 0) {
++            if (net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.mob.level, this.mob) && random.nextInt(10) == 0) {
+                this.selectedDirection = Direction.getRandom(random);
+                BlockPos blockpos = (new BlockPos(this.mob.getX(), this.mob.getY() + 0.5D, this.mob.getZ())).relative(this.selectedDirection);
+                BlockState blockstate = this.mob.level.getBlockState(blockpos);
+@@ -203,7 +_,7 @@
+                      BlockState blockstate = world.getBlockState(blockpos1);
+                      Block block = blockstate.getBlock();
+                      if (block instanceof SilverfishBlock) {
+-                        if (world.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
++                        if (net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(world, this.silverfish)) {
+                            world.destroyBlock(blockpos1, true, this.silverfish);
+                         } else {
+                            world.setBlock(blockpos1, ((SilverfishBlock)block).getHostBlock().defaultBlockState(), 3);

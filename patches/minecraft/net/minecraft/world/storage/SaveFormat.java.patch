@@ -1,0 +1,63 @@
+--- a/net/minecraft/world/storage/SaveFormat.java
++++ b/net/minecraft/world/storage/SaveFormat.java
+@@ -95,7 +_,7 @@
+          }
+       }
+ 
+-      Dynamic<T> dynamic1 = p_237259_1_.update(TypeReferences.WORLD_GEN_SETTINGS, dynamic, p_237259_2_, SharedConstants.getCurrentVersion().getWorldVersion());
++      Dynamic<T> dynamic1 = net.minecraftforge.common.ForgeHooks.fixUpDimensionsData(p_237259_1_.update(TypeReferences.WORLD_GEN_SETTINGS, dynamic, p_237259_2_, SharedConstants.getCurrentVersion().getWorldVersion()));
+       DataResult<DimensionGeneratorSettings> dataresult = DimensionGeneratorSettings.CODEC.parse(dynamic1);
+       return Pair.of(dataresult.resultOrPartial(Util.prefix("WorldGenSettings: ", LOGGER::error)).orElseGet(() -> {
+          Registry<DimensionType> registry = RegistryLookupCodec.create(Registry.DIMENSION_TYPE_REGISTRY).codec().parse(dynamic1).resultOrPartial(Util.prefix("Dimension type registry: ", LOGGER::error)).orElseThrow(() -> {
+@@ -182,6 +_,10 @@
+    }
+ 
+    private static BiFunction<File, DataFixer, ServerWorldInfo> getLevelData(DynamicOps<INBT> p_237270_0_, DatapackCodec p_237270_1_) {
++       return getReader(p_237270_0_, p_237270_1_, null);
++   }
++
++   private static BiFunction<File, DataFixer, ServerWorldInfo> getReader(DynamicOps<INBT> p_237270_0_, DatapackCodec p_237270_1_, @Nullable LevelSave levelSave) {
+       return (p_242976_2_, p_242976_3_) -> {
+          try {
+             CompoundNBT compoundnbt = CompressedStreamTools.readCompressed(p_242976_2_);
+@@ -193,7 +_,10 @@
+             Pair<DimensionGeneratorSettings, Lifecycle> pair = readWorldGenSettings(dynamic, p_242976_3_, i);
+             VersionData versiondata = VersionData.parse(dynamic);
+             WorldSettings worldsettings = WorldSettings.parse(dynamic, p_237270_1_);
+-            return ServerWorldInfo.parse(dynamic, p_242976_3_, i, compoundnbt2, worldsettings, versiondata, pair.getFirst(), pair.getSecond());
++            ServerWorldInfo info = ServerWorldInfo.parse(dynamic, p_242976_3_, i, compoundnbt2, worldsettings, versiondata, pair.getFirst(), pair.getSecond());
++            if (levelSave != null)
++                net.minecraftforge.fml.WorldPersistenceHooks.handleWorldDataLoad(levelSave, info, compoundnbt);
++            return info;
+          } catch (Exception exception) {
+             LOGGER.error("Exception reading {}", p_242976_2_, exception);
+             return null;
+@@ -314,7 +_,7 @@
+       @Nullable
+       public IServerConfiguration getDataTag(DynamicOps<INBT> p_237284_1_, DatapackCodec p_237284_2_) {
+          this.checkLock();
+-         return SaveFormat.this.readLevelData(this.levelPath.toFile(), SaveFormat.getLevelData(p_237284_1_, p_237284_2_));
++         return SaveFormat.this.readLevelData(this.levelPath.toFile(), SaveFormat.getReader(p_237284_1_, p_237284_2_, this));
+       }
+ 
+       @Nullable
+@@ -335,6 +_,8 @@
+          CompoundNBT compoundnbt1 = new CompoundNBT();
+          compoundnbt1.put("Data", compoundnbt);
+ 
++         net.minecraftforge.fml.WorldPersistenceHooks.handleWorldDataSave(this, p_237288_2_, compoundnbt1);
++
+          try {
+             File file2 = File.createTempFile("level", ".dat", file1);
+             CompressedStreamTools.writeCompressed(compoundnbt1, file2);
+@@ -350,6 +_,10 @@
+       public File getIconFile() {
+          this.checkLock();
+          return this.levelPath.resolve("icon.png").toFile();
++      }
++
++      public Path getWorldDir() {
++          return levelPath;
+       }
+ 
+       @OnlyIn(Dist.CLIENT)

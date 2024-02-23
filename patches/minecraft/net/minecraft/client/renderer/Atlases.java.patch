@@ -1,0 +1,25 @@
+--- a/net/minecraft/client/renderer/Atlases.java
++++ b/net/minecraft/client/renderer/Atlases.java
+@@ -129,7 +_,8 @@
+    }
+ 
+    public static RenderMaterial signTexture(WoodType p_228773_0_) {
+-      return new RenderMaterial(SIGN_SHEET, new ResourceLocation("entity/signs/" + p_228773_0_.name()));
++      ResourceLocation location = new ResourceLocation(p_228773_0_.name());
++      return new RenderMaterial(SIGN_SHEET, new ResourceLocation(location.getNamespace(), "entity/signs/" + location.getPath()));
+    }
+ 
+    private static RenderMaterial chestMaterial(String p_228774_0_) {
+@@ -156,5 +_,12 @@
+       default:
+          return p_228772_1_;
+       }
++   }
++
++   /**
++    * Not threadsafe. Enqueue it in client setup.
++    */
++   public static void addWoodType(WoodType woodType) {
++      SIGN_MATERIALS.put(woodType, signTexture(woodType));
+    }
+ }

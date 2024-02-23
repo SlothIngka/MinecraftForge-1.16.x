@@ -1,0 +1,60 @@
+--- a/net/minecraft/entity/passive/SnowGolemEntity.java
++++ b/net/minecraft/entity/passive/SnowGolemEntity.java
+@@ -40,7 +_,7 @@
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+-public class SnowGolemEntity extends GolemEntity implements IShearable, IRangedAttackMob {
++public class SnowGolemEntity extends GolemEntity implements IShearable, IRangedAttackMob, net.minecraftforge.common.IForgeShearable {
+    private static final DataParameter<Byte> DATA_PUMPKIN_ID = EntityDataManager.defineId(SnowGolemEntity.class, DataSerializers.BYTE);
+ 
+    public SnowGolemEntity(EntityType<? extends SnowGolemEntity> p_i50244_1_, World p_i50244_2_) {
+@@ -93,7 +_,7 @@
+             this.hurt(DamageSource.ON_FIRE, 1.0F);
+          }
+ 
+-         if (!this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
++         if (!net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.level, this)) {
+             return;
+          }
+ 
+@@ -104,7 +_,7 @@
+             j = MathHelper.floor(this.getY());
+             k = MathHelper.floor(this.getZ() + (double)((float)(l / 2 % 2 * 2 - 1) * 0.25F));
+             BlockPos blockpos = new BlockPos(i, j, k);
+-            if (this.level.getBlockState(blockpos).isAir() && this.level.getBiome(blockpos).getTemperature(blockpos) < 0.8F && blockstate.canSurvive(this.level, blockpos)) {
++            if (this.level.isEmptyBlock(blockpos) && this.level.getBiome(blockpos).getTemperature(blockpos) < 0.8F && blockstate.canSurvive(this.level, blockpos)) {
+                this.level.setBlockAndUpdate(blockpos, blockstate);
+             }
+          }
+@@ -130,7 +_,7 @@
+ 
+    protected ActionResultType mobInteract(PlayerEntity p_230254_1_, Hand p_230254_2_) {
+       ItemStack itemstack = p_230254_1_.getItemInHand(p_230254_2_);
+-      if (itemstack.getItem() == Items.SHEARS && this.readyForShearing()) {
++      if (false && itemstack.getItem() == Items.SHEARS && this.readyForShearing()) { //Forge: Moved to onSheared
+          this.shear(SoundCategory.PLAYERS);
+          if (!this.level.isClientSide) {
+             itemstack.hurtAndBreak(1, p_230254_1_, (p_213622_1_) -> {
+@@ -189,5 +_,21 @@
+    @OnlyIn(Dist.CLIENT)
+    public Vector3d getLeashOffset() {
+       return new Vector3d(0.0D, (double)(0.75F * this.getEyeHeight()), (double)(this.getBbWidth() * 0.4F));
++   }
++
++   @Override
++   public boolean isShearable(@javax.annotation.Nonnull ItemStack item, World world, BlockPos pos) {
++      return readyForShearing();
++   }
++
++   @javax.annotation.Nonnull
++   @Override
++   public java.util.List<ItemStack> onSheared(@Nullable PlayerEntity player, @javax.annotation.Nonnull ItemStack item, World world, BlockPos pos, int fortune) {
++      world.playSound(null, this, SoundEvents.SNOW_GOLEM_SHEAR, player == null ? SoundCategory.BLOCKS : SoundCategory.PLAYERS, 1.0F, 1.0F);
++      if (!world.isClientSide()) {
++         setPumpkin(false);
++         return java.util.Collections.singletonList(new ItemStack(Items.CARVED_PUMPKIN));
++      }
++      return java.util.Collections.emptyList();
+    }
+ }

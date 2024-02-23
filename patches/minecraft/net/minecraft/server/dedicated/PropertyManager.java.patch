@@ -1,0 +1,11 @@
+--- a/net/minecraft/server/dedicated/PropertyManager.java
++++ b/net/minecraft/server/dedicated/PropertyManager.java
+@@ -39,7 +_,7 @@
+ 
+    public void store(Path p_218970_1_) {
+       try (OutputStream outputstream = Files.newOutputStream(p_218970_1_)) {
+-         this.properties.store(outputstream, "Minecraft server properties");
++         net.minecraftforge.common.util.SortedProperties.store(properties, outputstream, "Minecraft server properties");
+       } catch (IOException ioexception) {
+          LOGGER.error("Failed to store properties to file: " + p_218970_1_);
+       }

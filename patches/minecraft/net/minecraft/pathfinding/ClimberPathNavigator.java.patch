@@ -1,0 +1,12 @@
+--- a/net/minecraft/pathfinding/ClimberPathNavigator.java
++++ b/net/minecraft/pathfinding/ClimberPathNavigator.java
+@@ -38,7 +_,8 @@
+          super.tick();
+       } else {
+          if (this.pathToPosition != null) {
+-            if (!this.pathToPosition.closerThan(this.mob.position(), (double)this.mob.getBbWidth()) && (!(this.mob.getY() > (double)this.pathToPosition.getY()) || !(new BlockPos((double)this.pathToPosition.getX(), this.mob.getY(), (double)this.pathToPosition.getZ())).closerThan(this.mob.position(), (double)this.mob.getBbWidth()))) {
++            // FORGE: Fix MC-94054
++            if (!this.pathToPosition.closerThan(this.mob.position(), Math.max((double)this.mob.getBbWidth(), 1.0D)) && (!(this.mob.getY() > (double)this.pathToPosition.getY()) || !(new BlockPos((double)this.pathToPosition.getX(), this.mob.getY(), (double)this.pathToPosition.getZ())).closerThan(this.mob.position(), Math.max((double)this.mob.getBbWidth(), 1.0D)))) {
+                this.mob.getMoveControl().setWantedPosition((double)this.pathToPosition.getX(), (double)this.pathToPosition.getY(), (double)this.pathToPosition.getZ(), this.speedModifier);
+             } else {
+                this.pathToPosition = null;

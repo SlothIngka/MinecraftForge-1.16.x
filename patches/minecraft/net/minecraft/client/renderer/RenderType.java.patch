@@ -1,0 +1,16 @@
+--- a/net/minecraft/client/renderer/RenderType.java
++++ b/net/minecraft/client/renderer/RenderType.java
+@@ -215,11 +_,11 @@
+    }
+ 
+    public static RenderType text(ResourceLocation p_228658_0_) {
+-      return create("text", DefaultVertexFormats.POSITION_COLOR_TEX_LIGHTMAP, 7, 256, false, true, RenderType.State.builder().setTextureState(new RenderState.TextureState(p_228658_0_, false, false)).setAlphaState(DEFAULT_ALPHA).setTransparencyState(TRANSLUCENT_TRANSPARENCY).setLightmapState(LIGHTMAP).createCompositeState(false));
++      return net.minecraftforge.client.ForgeRenderTypes.getText(p_228658_0_);
+    }
+ 
+    public static RenderType textSeeThrough(ResourceLocation p_228660_0_) {
+-      return create("text_see_through", DefaultVertexFormats.POSITION_COLOR_TEX_LIGHTMAP, 7, 256, false, true, RenderType.State.builder().setTextureState(new RenderState.TextureState(p_228660_0_, false, false)).setAlphaState(DEFAULT_ALPHA).setTransparencyState(TRANSLUCENT_TRANSPARENCY).setLightmapState(LIGHTMAP).setDepthTestState(NO_DEPTH_TEST).setWriteMaskState(COLOR_WRITE).createCompositeState(false));
++      return net.minecraftforge.client.ForgeRenderTypes.getTextSeeThrough(p_228660_0_);
+    }
+ 
+    public static RenderType lightning() {

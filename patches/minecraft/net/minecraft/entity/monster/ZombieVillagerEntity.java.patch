@@ -1,0 +1,20 @@
+--- a/net/minecraft/entity/monster/ZombieVillagerEntity.java
++++ b/net/minecraft/entity/monster/ZombieVillagerEntity.java
+@@ -116,7 +_,7 @@
+       if (!this.level.isClientSide && this.isAlive() && this.isConverting()) {
+          int i = this.getConversionProgress();
+          this.villagerConversionTime -= i;
+-         if (this.villagerConversionTime <= 0) {
++         if (this.villagerConversionTime <= 0 && net.minecraftforge.event.ForgeEventFactory.canLivingConvert(this, EntityType.VILLAGER, (timer) -> this.villagerConversionTime = timer)) {
+             this.finishConversion((ServerWorld)this.level);
+          }
+       }
+@@ -218,7 +_,7 @@
+       if (!this.isSilent()) {
+          p_213791_1_.levelEvent((PlayerEntity)null, 1027, this.blockPosition(), 0);
+       }
+-
++      net.minecraftforge.event.ForgeEventFactory.onLivingConvert(this, villagerentity);
+    }
+ 
+    private int getConversionProgress() {

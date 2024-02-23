@@ -1,0 +1,44 @@
+--- a/net/minecraft/data/loot/EntityLootTables.java
++++ b/net/minecraft/data/loot/EntityLootTables.java
+@@ -50,7 +_,7 @@
+       return LootTable.lootTable().withPool(LootPool.lootPool().setRolls(ConstantRange.exactly(1)).add(ItemLootEntry.lootTableItem(p_218583_0_))).withPool(LootPool.lootPool().setRolls(ConstantRange.exactly(1)).add(TableLootEntry.lootTableReference(EntityType.SHEEP.getDefaultLootTable())));
+    }
+ 
+-   public void accept(BiConsumer<ResourceLocation, LootTable.Builder> p_accept_1_) {
++   protected void addTables() {
+       this.add(EntityType.ARMOR_STAND, LootTable.lootTable());
+       this.add(EntityType.BAT, LootTable.lootTable());
+       this.add(EntityType.BEE, LootTable.lootTable());
+@@ -141,11 +_,15 @@
+       this.add(EntityType.PIGLIN, LootTable.lootTable());
+       this.add(EntityType.PIGLIN_BRUTE, LootTable.lootTable());
+       this.add(EntityType.ZOMBIE_VILLAGER, LootTable.lootTable().withPool(LootPool.lootPool().setRolls(ConstantRange.exactly(1)).add(ItemLootEntry.lootTableItem(Items.ROTTEN_FLESH).apply(SetCount.setCount(RandomValueRange.between(0.0F, 2.0F))).apply(LootingEnchantBonus.lootingMultiplier(RandomValueRange.between(0.0F, 1.0F))))).withPool(LootPool.lootPool().setRolls(ConstantRange.exactly(1)).add(ItemLootEntry.lootTableItem(Items.IRON_INGOT)).add(ItemLootEntry.lootTableItem(Items.CARROT)).add(ItemLootEntry.lootTableItem(Items.POTATO)).when(KilledByPlayer.killedByPlayer()).when(RandomChanceWithLooting.randomChanceAndLootingBoost(0.025F, 0.01F))));
++   }
++
++   public void accept(BiConsumer<ResourceLocation, LootTable.Builder> p_accept_1_) {
++      this.addTables();
+       Set<ResourceLocation> set = Sets.newHashSet();
+ 
+-      for(EntityType<?> entitytype : Registry.ENTITY_TYPE) {
++      for(EntityType<?> entitytype : getKnownEntities()) {
+          ResourceLocation resourcelocation = entitytype.getDefaultLootTable();
+-         if (!SPECIAL_LOOT_TABLE_TYPES.contains(entitytype) && entitytype.getCategory() == EntityClassification.MISC) {
++         if (isNonLiving(entitytype)) {
+             if (resourcelocation != LootTables.EMPTY && this.map.remove(resourcelocation) != null) {
+                throw new IllegalStateException(String.format("Weird loottable '%s' for '%s', not a LivingEntity so should not have loot", resourcelocation, Registry.ENTITY_TYPE.getKey(entitytype)));
+             }
+@@ -160,6 +_,14 @@
+       }
+ 
+       this.map.forEach(p_accept_1_::accept);
++   }
++
++   protected Iterable<EntityType<?>> getKnownEntities() {
++      return Registry.ENTITY_TYPE;
++   }
++
++   protected boolean isNonLiving(EntityType<?> entitytype) {
++      return !SPECIAL_LOOT_TABLE_TYPES.contains(entitytype) && entitytype.getCategory() == EntityClassification.MISC;
+    }
+ 
+    protected void add(EntityType<?> p_218582_1_, LootTable.Builder p_218582_2_) {

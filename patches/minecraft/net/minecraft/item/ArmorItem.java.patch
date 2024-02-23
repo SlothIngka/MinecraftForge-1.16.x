@@ -1,0 +1,11 @@
+--- a/net/minecraft/item/ArmorItem.java
++++ b/net/minecraft/item/ArmorItem.java
+@@ -69,7 +_,7 @@
+       UUID uuid = ARMOR_MODIFIER_UUID_PER_SLOT[p_i48534_2_.getIndex()];
+       builder.put(Attributes.ARMOR, new AttributeModifier(uuid, "Armor modifier", (double)this.defense, AttributeModifier.Operation.ADDITION));
+       builder.put(Attributes.ARMOR_TOUGHNESS, new AttributeModifier(uuid, "Armor toughness", (double)this.toughness, AttributeModifier.Operation.ADDITION));
+-      if (p_i48534_1_ == ArmorMaterial.NETHERITE) {
++      if (this.knockbackResistance > 0) {
+          builder.put(Attributes.KNOCKBACK_RESISTANCE, new AttributeModifier(uuid, "Armor knockback resistance", (double)this.knockbackResistance, AttributeModifier.Operation.ADDITION));
+       }
+ 

@@ -1,0 +1,63 @@
+--- a/net/minecraft/client/gui/IngameGui.java
++++ b/net/minecraft/client/gui/IngameGui.java
+@@ -79,7 +_,7 @@
+    protected static final ResourceLocation VIGNETTE_LOCATION = new ResourceLocation("textures/misc/vignette.png");
+    protected static final ResourceLocation WIDGETS_LOCATION = new ResourceLocation("textures/gui/widgets.png");
+    protected static final ResourceLocation PUMPKIN_BLUR_LOCATION = new ResourceLocation("textures/misc/pumpkinblur.png");
+-   protected static final ITextComponent DEMO_EXPIRED_TEXT = new TranslationTextComponent("demo.demoExpired");
++   private static final ITextComponent DEMO_EXPIRED_TEXT = new TranslationTextComponent("demo.demoExpired");
+    protected final Random random = new Random();
+    protected final Minecraft minecraft;
+    protected final ItemRenderer itemRenderer;
+@@ -415,6 +_,9 @@
+ 
+          for(EffectInstance effectinstance : Ordering.natural().reverse().sortedCopy(collection)) {
+             Effect effect = effectinstance.getEffect();
++            if (!effectinstance.shouldRenderHUD()) continue;
++            // Rebind in case previous renderHUDEffect changed texture
++            this.minecraft.getTextureManager().bind(ContainerScreen.INVENTORY_LOCATION);
+             if (effectinstance.showIcon()) {
+                int k = this.screenWidth;
+                int l = 1;
+@@ -452,6 +_,7 @@
+                   RenderSystem.color4f(1.0F, 1.0F, 1.0F, f1);
+                   blit(p_238444_1_, j1 + 3, k1 + 3, this.getBlitOffset(), 18, 18, textureatlassprite);
+                });
++               effectinstance.renderHUDEffect(this, p_238444_1_, k, l, this.getBlitOffset(), f);
+             }
+          }
+ 
+@@ -576,7 +_,8 @@
+             iformattabletextcomponent.withStyle(TextFormatting.ITALIC);
+          }
+ 
+-         int i = this.getFont().width(iformattabletextcomponent);
++         ITextComponent highlightTip = this.lastToolHighlight.getHighlightTip(iformattabletextcomponent);
++         int i = this.getFont().width(highlightTip);
+          int j = (this.screenWidth - i) / 2;
+          int k = this.screenHeight - 59;
+          if (!this.minecraft.gameMode.canHurtPlayer()) {
+@@ -593,7 +_,13 @@
+             RenderSystem.enableBlend();
+             RenderSystem.defaultBlendFunc();
+             fill(p_238453_1_, j - 2, k - 2, j + i + 2, k + 9 + 2, this.minecraft.options.getBackgroundColor(0));
+-            this.getFont().drawShadow(p_238453_1_, iformattabletextcomponent, (float)j, (float)k, 16777215 + (l << 24));
++            FontRenderer font = lastToolHighlight.getItem().getFontRenderer(lastToolHighlight);
++            if (font == null) {
++               this.getFont().drawShadow(p_238453_1_, highlightTip, (float)j, (float)k, 16777215 + (l << 24));
++            } else {
++               j = (this.screenWidth - font.width(highlightTip)) / 2;
++               font.drawShadow(p_238453_1_, highlightTip, (float)j, (float)k, 16777215 + (l << 24));
++            }
+             RenderSystem.disableBlend();
+             RenderSystem.popMatrix();
+          }
+@@ -1056,7 +_,7 @@
+          ItemStack itemstack = this.minecraft.player.inventory.getSelected();
+          if (itemstack.isEmpty()) {
+             this.toolHighlightTimer = 0;
+-         } else if (!this.lastToolHighlight.isEmpty() && itemstack.getItem() == this.lastToolHighlight.getItem() && itemstack.getHoverName().equals(this.lastToolHighlight.getHoverName())) {
++         } else if (!this.lastToolHighlight.isEmpty() && itemstack.getItem() == this.lastToolHighlight.getItem() && (itemstack.getHoverName().equals(this.lastToolHighlight.getHoverName()) && itemstack.getHighlightTip(itemstack.getHoverName()).equals(lastToolHighlight.getHighlightTip(lastToolHighlight.getHoverName())))) {
+             if (this.toolHighlightTimer > 0) {
+                --this.toolHighlightTimer;
+             }

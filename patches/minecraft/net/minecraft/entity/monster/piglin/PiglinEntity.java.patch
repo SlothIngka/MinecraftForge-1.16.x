@@ -1,0 +1,29 @@
+--- a/net/minecraft/entity/monster/piglin/PiglinEntity.java
++++ b/net/minecraft/entity/monster/piglin/PiglinEntity.java
+@@ -265,7 +_,7 @@
+       } else if (this.isChargingCrossbow()) {
+          return PiglinAction.CROSSBOW_CHARGE;
+       } else {
+-         return this.isAggressive() && this.isHolding(Items.CROSSBOW) ? PiglinAction.CROSSBOW_HOLD : PiglinAction.DEFAULT;
++         return this.isAggressive() && this.isHolding(item -> item instanceof net.minecraft.item.CrossbowItem) ? PiglinAction.CROSSBOW_HOLD : PiglinAction.DEFAULT;
+       }
+    }
+ 
+@@ -307,7 +_,7 @@
+    }
+ 
+    protected void holdInOffHand(ItemStack p_234439_1_) {
+-      if (p_234439_1_.getItem() == PiglinTasks.BARTERING_ITEM) {
++      if (p_234439_1_.isPiglinCurrency()) {
+          this.setItemSlot(EquipmentSlotType.OFFHAND, p_234439_1_);
+          this.setGuaranteedDrop(EquipmentSlotType.OFFHAND);
+       } else {
+@@ -317,7 +_,7 @@
+    }
+ 
+    public boolean wantsToPickUp(ItemStack p_230293_1_) {
+-      return this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING) && this.canPickUpLoot() && PiglinTasks.wantsToPickup(this, p_230293_1_);
++      return net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.level, this) && this.canPickUpLoot() && PiglinTasks.wantsToPickup(this, p_230293_1_);
+    }
+ 
+    protected boolean canReplaceCurrentItem(ItemStack p_234440_1_) {

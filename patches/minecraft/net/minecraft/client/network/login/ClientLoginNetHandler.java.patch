@@ -1,0 +1,18 @@
+--- a/net/minecraft/client/network/login/ClientLoginNetHandler.java
++++ b/net/minecraft/client/network/login/ClientLoginNetHandler.java
+@@ -115,6 +_,7 @@
+       this.updateStatus.accept(new TranslationTextComponent("connect.joining"));
+       this.localGameProfile = p_147390_1_.getGameProfile();
+       this.connection.setProtocol(ProtocolType.PLAY);
++      net.minecraftforge.fml.network.NetworkHooks.handleClientLoginSuccess(this.connection);
+       this.connection.setListener(new ClientPlayNetHandler(this.minecraft, this.parent, this.connection, this.localGameProfile));
+    }
+ 
+@@ -143,6 +_,7 @@
+    }
+ 
+    public void handleCustomQuery(SCustomPayloadLoginPacket p_209521_1_) {
++      if (net.minecraftforge.fml.network.NetworkHooks.onCustomPayload(p_209521_1_, this.connection)) return;
+       this.updateStatus.accept(new TranslationTextComponent("connect.negotiating"));
+       this.connection.send(new CCustomPayloadLoginPacket(p_209521_1_.getTransactionId(), (PacketBuffer)null));
+    }

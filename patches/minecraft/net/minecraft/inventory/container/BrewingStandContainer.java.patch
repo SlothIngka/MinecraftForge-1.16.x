@@ -1,0 +1,29 @@
+--- a/net/minecraft/inventory/container/BrewingStandContainer.java
++++ b/net/minecraft/inventory/container/BrewingStandContainer.java
+@@ -143,7 +_,7 @@
+       }
+ 
+       public boolean mayPlace(ItemStack p_75214_1_) {
+-         return PotionBrewing.isIngredient(p_75214_1_);
++         return net.minecraftforge.common.brewing.BrewingRecipeRegistry.isValidIngredient(p_75214_1_);
+       }
+ 
+       public int getMaxStackSize() {
+@@ -167,6 +_,7 @@
+       public ItemStack onTake(PlayerEntity p_190901_1_, ItemStack p_190901_2_) {
+          Potion potion = PotionUtils.getPotion(p_190901_2_);
+          if (p_190901_1_ instanceof ServerPlayerEntity) {
++            net.minecraftforge.event.ForgeEventFactory.onPlayerBrewedPotion(p_190901_1_, p_190901_2_);
+             CriteriaTriggers.BREWED_POTION.trigger((ServerPlayerEntity)p_190901_1_, potion);
+          }
+ 
+@@ -175,8 +_,7 @@
+       }
+ 
+       public static boolean mayPlaceItem(ItemStack p_75243_0_) {
+-         Item item = p_75243_0_.getItem();
+-         return item == Items.POTION || item == Items.SPLASH_POTION || item == Items.LINGERING_POTION || item == Items.GLASS_BOTTLE;
++         return net.minecraftforge.common.brewing.BrewingRecipeRegistry.isValidInput(p_75243_0_);
+       }
+    }
+ }

@@ -1,0 +1,81 @@
+--- a/net/minecraft/util/math/vector/Matrix4f.java
++++ b/net/minecraft/util/math/vector/Matrix4f.java
+@@ -386,4 +_,78 @@
+       matrix4f.m23 = p_226599_2_;
+       return matrix4f;
+    }
++
++    // Forge start
++    public Matrix4f(float[] values) {
++        m00 = values[0];
++        m01 = values[1];
++        m02 = values[2];
++        m03 = values[3];
++        m10 = values[4];
++        m11 = values[5];
++        m12 = values[6];
++        m13 = values[7];
++        m20 = values[8];
++        m21 = values[9];
++        m22 = values[10];
++        m23 = values[11];
++        m30 = values[12];
++        m31 = values[13];
++        m32 = values[14];
++        m33 = values[15];
++    }
++
++    public void set(Matrix4f mat) {
++        this.m00 = mat.m00;
++        this.m01 = mat.m01;
++        this.m02 = mat.m02;
++        this.m03 = mat.m03;
++        this.m10 = mat.m10;
++        this.m11 = mat.m11;
++        this.m12 = mat.m12;
++        this.m13 = mat.m13;
++        this.m20 = mat.m20;
++        this.m21 = mat.m21;
++        this.m22 = mat.m22;
++        this.m23 = mat.m23;
++        this.m30 = mat.m30;
++        this.m31 = mat.m31;
++        this.m32 = mat.m32;
++        this.m33 = mat.m33;
++    }
++
++    public void add(Matrix4f other) {
++        m00 += other.m00;
++        m01 += other.m01;
++        m02 += other.m02;
++        m03 += other.m03;
++        m10 += other.m10;
++        m11 += other.m11;
++        m12 += other.m12;
++        m13 += other.m13;
++        m20 += other.m20;
++        m21 += other.m21;
++        m22 += other.m22;
++        m23 += other.m23;
++        m30 += other.m30;
++        m31 += other.m31;
++        m32 += other.m32;
++        m33 += other.m33;
++    }
++
++    public void multiplyBackward(Matrix4f other) {
++        Matrix4f copy = other.copy();
++        copy.multiply(this);
++        this.set(copy);
++    }
++
++    public void setTranslation(float x, float y, float z) {
++        this.m00 = 1.0F;
++        this.m11 = 1.0F;
++        this.m22 = 1.0F;
++        this.m33 = 1.0F;
++        this.m03 = x;
++        this.m13 = y;
++        this.m23 = z;
++    }
+ }

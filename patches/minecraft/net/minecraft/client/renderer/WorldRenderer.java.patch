@@ -1,0 +1,215 @@
+--- a/net/minecraft/client/renderer/WorldRenderer.java
++++ b/net/minecraft/client/renderer/WorldRenderer.java
+@@ -222,6 +_,11 @@
+    }
+ 
+    private void renderSnowAndRain(LightTexture p_228438_1_, float p_228438_2_, double p_228438_3_, double p_228438_5_, double p_228438_7_) {
++      net.minecraftforge.client.IWeatherRenderHandler renderHandler = level.effects().getWeatherRenderHandler();
++      if (renderHandler != null) {
++         renderHandler.render(ticks, p_228438_2_, level, minecraft, p_228438_1_, p_228438_3_, p_228438_5_, p_228438_7_);
++         return;
++      }
+       float f = this.minecraft.level.getRainLevel(p_228438_2_);
+       if (!(f <= 0.0F)) {
+          p_228438_1_.turnOnLightLayer();
+@@ -347,6 +_,11 @@
+    }
+ 
+    public void tickRain(ActiveRenderInfo p_228436_1_) {
++      net.minecraftforge.client.IWeatherParticleRenderHandler renderHandler = level.effects().getWeatherParticleRenderHandler();
++      if (renderHandler != null) {
++         renderHandler.render(ticks, level, minecraft, p_228436_1_);
++         return;
++      }
+       float f = this.minecraft.level.getRainLevel(1.0F) / (Minecraft.useFancyGraphics() ? 1.0F : 2.0F);
+       if (!(f <= 0.0F)) {
+          Random random = new Random((long)this.ticks * 312987231L);
+@@ -830,7 +_,7 @@
+             this.needsUpdate = true;
+             BlockPos blockpos2 = chunkrenderdispatcher$chunkrender4.getOrigin().offset(8, 8, 8);
+             boolean flag1 = blockpos2.distSqr(blockpos) < 768.0D;
+-            if (!chunkrenderdispatcher$chunkrender4.isDirtyFromPlayer() && !flag1) {
++            if (net.minecraftforge.common.ForgeConfig.CLIENT.alwaysSetupTerrainOffThread.get() || !chunkrenderdispatcher$chunkrender4.isDirtyFromPlayer() && !flag1) {
+                this.chunksToCompile.add(chunkrenderdispatcher$chunkrender4);
+             } else {
+                this.minecraft.getProfiler().push("build near");
+@@ -915,13 +_,13 @@
+       float f = p_228426_7_.getRenderDistance();
+       boolean flag1 = this.minecraft.level.effects().isFoggyAt(MathHelper.floor(d0), MathHelper.floor(d1)) || this.minecraft.gui.getBossOverlay().shouldCreateWorldFog();
+       if (this.minecraft.options.renderDistance >= 4) {
+-         FogRenderer.setupFog(p_228426_6_, FogRenderer.FogType.FOG_SKY, f, flag1);
++         FogRenderer.setupFog(p_228426_6_, FogRenderer.FogType.FOG_SKY, f, flag1, p_228426_2_);
+          iprofiler.popPush("sky");
+          this.renderSky(p_228426_1_, p_228426_2_);
+       }
+ 
+       iprofiler.popPush("fog");
+-      FogRenderer.setupFog(p_228426_6_, FogRenderer.FogType.FOG_TERRAIN, Math.max(f - 16.0F, 32.0F), flag1);
++      FogRenderer.setupFog(p_228426_6_, FogRenderer.FogType.FOG_TERRAIN, Math.max(f - 16.0F, 32.0F), flag1, p_228426_2_);
+       iprofiler.popPush("terrain_setup");
+       this.setupRender(p_228426_6_, clippinghelper, flag, this.frameId++, this.minecraft.player.isSpectator());
+       iprofiler.popPush("updatechunks");
+@@ -942,7 +_,9 @@
+       this.compileChunksUntil(p_228426_3_ + l1);
+       iprofiler.popPush("terrain");
+       this.renderChunkLayer(RenderType.solid(), p_228426_1_, d0, d1, d2);
++      this.minecraft.getModelManager().getAtlas(AtlasTexture.LOCATION_BLOCKS).setBlurMipmap(false, this.minecraft.options.mipmapLevels > 0); // FORGE: fix flickering leaves when mods mess up the blurMipmap settings
+       this.renderChunkLayer(RenderType.cutoutMipped(), p_228426_1_, d0, d1, d2);
++      this.minecraft.getModelManager().getAtlas(AtlasTexture.LOCATION_BLOCKS).restoreLastBlurMipmap();
+       this.renderChunkLayer(RenderType.cutout(), p_228426_1_, d0, d1, d2);
+       if (this.level.effects().constantAmbientLight()) {
+          RenderHelper.setupNetherLevel(p_228426_1_.last().pose());
+@@ -972,7 +_,7 @@
+       IRenderTypeBuffer.Impl irendertypebuffer$impl = this.renderBuffers.bufferSource();
+ 
+       for(Entity entity : this.level.entitiesForRendering()) {
+-         if ((this.entityRenderDispatcher.shouldRender(entity, clippinghelper, d0, d1, d2) || entity.hasIndirectPassenger(this.minecraft.player)) && (entity != p_228426_6_.getEntity() || p_228426_6_.isDetached() || p_228426_6_.getEntity() instanceof LivingEntity && ((LivingEntity)p_228426_6_.getEntity()).isSleeping()) && (!(entity instanceof ClientPlayerEntity) || p_228426_6_.getEntity() == entity)) {
++         if ((this.entityRenderDispatcher.shouldRender(entity, clippinghelper, d0, d1, d2) || entity.hasIndirectPassenger(this.minecraft.player)) && (entity != p_228426_6_.getEntity() || p_228426_6_.isDetached() || p_228426_6_.getEntity() instanceof LivingEntity && ((LivingEntity)p_228426_6_.getEntity()).isSleeping()) && (!(entity instanceof ClientPlayerEntity) || p_228426_6_.getEntity() == entity || (entity == minecraft.player && !minecraft.player.isSpectator()))) { //FORGE: render local player entity when it is not the renderViewEntity
+             ++this.renderedEntities;
+             if (entity.tickCount == 0) {
+                entity.xOld = entity.getX();
+@@ -1010,6 +_,7 @@
+          List<TileEntity> list = worldrenderer$localrenderinformationcontainer.chunk.getCompiledChunk().getRenderableBlockEntities();
+          if (!list.isEmpty()) {
+             for(TileEntity tileentity1 : list) {
++               if(!clippinghelper.isVisible(tileentity1.getRenderBoundingBox())) continue;
+                BlockPos blockpos3 = tileentity1.getBlockPos();
+                IRenderTypeBuffer irendertypebuffer1 = irendertypebuffer$impl;
+                p_228426_1_.pushPose();
+@@ -1035,6 +_,7 @@
+ 
+       synchronized(this.globalBlockEntities) {
+          for(TileEntity tileentity : this.globalBlockEntities) {
++            if(!clippinghelper.isVisible(tileentity.getRenderBoundingBox())) continue;
+             BlockPos blockpos2 = tileentity.getBlockPos();
+             p_228426_1_.pushPose();
+             p_228426_1_.translate((double)blockpos2.getX() - d0, (double)blockpos2.getY() - d1, (double)blockpos2.getZ() - d2);
+@@ -1084,10 +_,13 @@
+          iprofiler.popPush("outline");
+          BlockPos blockpos = ((BlockRayTraceResult)raytraceresult).getBlockPos();
+          BlockState blockstate = this.level.getBlockState(blockpos);
+-         if (!blockstate.isAir() && this.level.getWorldBorder().isWithinBounds(blockpos)) {
++         if (!net.minecraftforge.client.ForgeHooksClient.onDrawBlockHighlight(this, p_228426_6_, raytraceresult, p_228426_2_, p_228426_1_, irendertypebuffer$impl))
++         if (!blockstate.isAir(this.level, blockpos) && this.level.getWorldBorder().isWithinBounds(blockpos)) {
+             IVertexBuilder ivertexbuilder2 = irendertypebuffer$impl.getBuffer(RenderType.lines());
+             this.renderHitOutline(p_228426_1_, ivertexbuilder2, p_228426_6_.getEntity(), d0, d1, d2, blockpos, blockstate);
+          }
++      } else if (raytraceresult != null && raytraceresult.getType() == RayTraceResult.Type.ENTITY) {
++         net.minecraftforge.client.ForgeHooksClient.onDrawBlockHighlight(this, p_228426_6_, raytraceresult, p_228426_2_, p_228426_1_, irendertypebuffer$impl);
+       }
+ 
+       RenderSystem.pushMatrix();
+@@ -1119,7 +_,7 @@
+          this.particlesTarget.copyDepthFrom(this.minecraft.getMainRenderTarget());
+          RenderState.PARTICLES_TARGET.setupRenderState();
+          iprofiler.popPush("particles");
+-         this.minecraft.particleEngine.render(p_228426_1_, irendertypebuffer$impl, p_228426_8_, p_228426_6_, p_228426_2_);
++         this.minecraft.particleEngine.renderParticles(p_228426_1_, irendertypebuffer$impl, p_228426_8_, p_228426_6_, p_228426_2_, clippinghelper);
+          RenderState.PARTICLES_TARGET.clearRenderState();
+       } else {
+          iprofiler.popPush("translucent");
+@@ -1129,7 +_,7 @@
+          iprofiler.popPush("string");
+          this.renderChunkLayer(RenderType.tripwire(), p_228426_1_, d0, d1, d2);
+          iprofiler.popPush("particles");
+-         this.minecraft.particleEngine.render(p_228426_1_, irendertypebuffer$impl, p_228426_8_, p_228426_6_, p_228426_2_);
++         this.minecraft.particleEngine.renderParticles(p_228426_1_, irendertypebuffer$impl, p_228426_8_, p_228426_6_, p_228426_2_, clippinghelper);
+       }
+ 
+       RenderSystem.pushMatrix();
+@@ -1481,6 +_,11 @@
+    }
+ 
+    public void renderSky(MatrixStack p_228424_1_, float p_228424_2_) {
++      net.minecraftforge.client.ISkyRenderHandler renderHandler = level.effects().getSkyRenderHandler();
++      if (renderHandler != null) {
++         renderHandler.render(ticks, p_228424_2_, p_228424_1_, level, minecraft);
++         return;
++      }
+       if (this.minecraft.level.effects().skyType() == DimensionRenderInfo.FogType.END) {
+          this.renderEndSky(p_228424_1_);
+       } else if (this.minecraft.level.effects().skyType() == DimensionRenderInfo.FogType.NORMAL) {
+@@ -1609,6 +_,11 @@
+    }
+ 
+    public void renderClouds(MatrixStack p_228425_1_, float p_228425_2_, double p_228425_3_, double p_228425_5_, double p_228425_7_) {
++      net.minecraftforge.client.ICloudRenderHandler renderHandler = level.effects().getCloudRenderHandler();
++      if (renderHandler != null) {
++         renderHandler.render(ticks, p_228425_2_, p_228425_1_, level, minecraft, p_228425_3_, p_228425_5_, p_228425_7_);
++         return;
++      }
+       float f = this.level.effects().getCloudHeight();
+       if (!Float.isNaN(f)) {
+          RenderSystem.disableCull();
+@@ -1792,7 +_,7 @@
+ 
+          while(iterator.hasNext()) {
+             ChunkRenderDispatcher.ChunkRender chunkrenderdispatcher$chunkrender = iterator.next();
+-            if (chunkrenderdispatcher$chunkrender.isDirtyFromPlayer()) {
++            if (!net.minecraftforge.common.ForgeConfig.CLIENT.alwaysSetupTerrainOffThread.get() && chunkrenderdispatcher$chunkrender.isDirtyFromPlayer()) {
+                this.chunkRenderDispatcher.rebuildChunkSync(chunkrenderdispatcher$chunkrender);
+             } else {
+                chunkrenderdispatcher$chunkrender.rebuildChunkAsync(this.chunkRenderDispatcher);
+@@ -2076,7 +_,12 @@
+       this.viewArea.setDirty(p_215319_1_, p_215319_2_, p_215319_3_, p_215319_4_);
+    }
+ 
++   @Deprecated // Forge: use item aware function below
+    public void playStreamingMusic(@Nullable SoundEvent p_184377_1_, BlockPos p_184377_2_) {
++      this.playRecord(p_184377_1_, p_184377_2_, p_184377_1_ == null? null : MusicDiscItem.getBySound(p_184377_1_));
++   }
++
++   public void playRecord(@Nullable SoundEvent p_184377_1_, BlockPos p_184377_2_, @Nullable MusicDiscItem musicDiscItem) {
+       ISound isound = this.playingRecords.get(p_184377_2_);
+       if (isound != null) {
+          this.minecraft.getSoundManager().stop(isound);
+@@ -2084,7 +_,7 @@
+       }
+ 
+       if (p_184377_1_ != null) {
+-         MusicDiscItem musicdiscitem = MusicDiscItem.getBySound(p_184377_1_);
++         MusicDiscItem musicdiscitem = musicDiscItem;
+          if (musicdiscitem != null) {
+             this.minecraft.gui.setNowPlaying(musicdiscitem.getDisplayName());
+          }
+@@ -2232,7 +_,7 @@
+          break;
+       case 1010:
+          if (Item.byId(p_180439_4_) instanceof MusicDiscItem) {
+-            this.playStreamingMusic(((MusicDiscItem)Item.byId(p_180439_4_)).getSound(), p_180439_3_);
++            this.playRecord(((MusicDiscItem)Item.byId(p_180439_4_)).getSound(), p_180439_3_, (MusicDiscItem) Item.byId(p_180439_4_));
+          } else {
+             this.playStreamingMusic((SoundEvent)null, p_180439_3_);
+          }
+@@ -2382,8 +_,8 @@
+          break;
+       case 2001:
+          BlockState blockstate = Block.stateById(p_180439_4_);
+-         if (!blockstate.isAir()) {
+-            SoundType soundtype = blockstate.getSoundType();
++         if (!blockstate.isAir(this.level, p_180439_3_)) {
++            SoundType soundtype = blockstate.getSoundType(this.level, p_180439_3_, null);
+             this.level.playLocalSound(p_180439_3_, soundtype.getBreakSound(), SoundCategory.BLOCKS, (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F, false);
+          }
+ 
+@@ -2531,7 +_,7 @@
+       } else {
+          int i = p_228420_0_.getBrightness(LightType.SKY, p_228420_2_);
+          int j = p_228420_0_.getBrightness(LightType.BLOCK, p_228420_2_);
+-         int k = p_228420_1_.getLightEmission();
++         int k = p_228420_1_.getLightValue(p_228420_0_, p_228420_2_);
+          if (j < k) {
+             j = k;
+          }
+@@ -2568,6 +_,11 @@
+    @Nullable
+    public Framebuffer getCloudsTarget() {
+       return this.cloudsTarget;
++   }
++
++   @Override
++   public net.minecraftforge.resource.IResourceType getResourceType() {
++      return net.minecraftforge.resource.VanillaResourceType.MODELS;
+    }
+ 
+    @OnlyIn(Dist.CLIENT)

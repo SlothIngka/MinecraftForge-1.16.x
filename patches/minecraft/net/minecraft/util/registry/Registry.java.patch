@@ -1,0 +1,210 @@
+--- a/net/minecraft/util/registry/Registry.java
++++ b/net/minecraft/util/registry/Registry.java
+@@ -94,6 +_,10 @@
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+ 
++/*
++ * Attention Modders: This SHOULD NOT be used, you should use ForgeRegistries instead. As it has a cleaner modder facing API.
++ * We will be wrapping all of these in our API as necessary for syncing and management.
++ */
+ public abstract class Registry<T> implements Codec<T>, Keyable, IObjectIntIterable<T> {
+    protected static final Logger LOGGER = LogManager.getLogger();
+    private static final Map<ResourceLocation, Supplier<?>> LOADERS = Maps.newLinkedHashMap();
+@@ -133,43 +_,43 @@
+    public static final RegistryKey<Registry<DimensionType>> DIMENSION_TYPE_REGISTRY = createRegistryKey("dimension_type");
+    public static final RegistryKey<Registry<World>> DIMENSION_REGISTRY = createRegistryKey("dimension");
+    public static final RegistryKey<Registry<Dimension>> LEVEL_STEM_REGISTRY = createRegistryKey("dimension");
+-   public static final Registry<SoundEvent> SOUND_EVENT = registerSimple(SOUND_EVENT_REGISTRY, () -> {
++   @Deprecated public static final Registry<SoundEvent> SOUND_EVENT = forge(SOUND_EVENT_REGISTRY, () -> {
+       return SoundEvents.ITEM_PICKUP;
+    });
+-   public static final DefaultedRegistry<Fluid> FLUID = registerDefaulted(FLUID_REGISTRY, "empty", () -> {
++   @Deprecated public static final DefaultedRegistry<Fluid> FLUID = forge(FLUID_REGISTRY, "empty", () -> {
+       return Fluids.EMPTY;
+    });
+-   public static final Registry<Effect> MOB_EFFECT = registerSimple(MOB_EFFECT_REGISTRY, () -> {
++   @Deprecated public static final Registry<Effect> MOB_EFFECT = forge(MOB_EFFECT_REGISTRY, () -> {
+       return Effects.LUCK;
+    });
+-   public static final DefaultedRegistry<Block> BLOCK = registerDefaulted(BLOCK_REGISTRY, "air", () -> {
++   @Deprecated public static final DefaultedRegistry<Block> BLOCK = forge(BLOCK_REGISTRY, "air", () -> {
+       return Blocks.AIR;
+    });
+-   public static final Registry<Enchantment> ENCHANTMENT = registerSimple(ENCHANTMENT_REGISTRY, () -> {
++   @Deprecated public static final Registry<Enchantment> ENCHANTMENT = forge(ENCHANTMENT_REGISTRY, () -> {
+       return Enchantments.BLOCK_FORTUNE;
+    });
+-   public static final DefaultedRegistry<EntityType<?>> ENTITY_TYPE = registerDefaulted(ENTITY_TYPE_REGISTRY, "pig", () -> {
++   @Deprecated public static final DefaultedRegistry<EntityType<?>> ENTITY_TYPE = forge(ENTITY_TYPE_REGISTRY, "pig", () -> {
+       return EntityType.PIG;
+    });
+-   public static final DefaultedRegistry<Item> ITEM = registerDefaulted(ITEM_REGISTRY, "air", () -> {
++   @Deprecated public static final DefaultedRegistry<Item> ITEM = forge(ITEM_REGISTRY, "air", () -> {
+       return Items.AIR;
+    });
+-   public static final DefaultedRegistry<Potion> POTION = registerDefaulted(POTION_REGISTRY, "empty", () -> {
++   @Deprecated public static final DefaultedRegistry<Potion> POTION = forge(POTION_REGISTRY, "empty", () -> {
+       return Potions.EMPTY;
+    });
+-   public static final Registry<ParticleType<?>> PARTICLE_TYPE = registerSimple(PARTICLE_TYPE_REGISTRY, () -> {
++   @Deprecated public static final Registry<ParticleType<?>> PARTICLE_TYPE = forge(PARTICLE_TYPE_REGISTRY, () -> {
+       return ParticleTypes.BLOCK;
+    });
+-   public static final Registry<TileEntityType<?>> BLOCK_ENTITY_TYPE = registerSimple(BLOCK_ENTITY_TYPE_REGISTRY, () -> {
++   @Deprecated public static final Registry<TileEntityType<?>> BLOCK_ENTITY_TYPE = forge(BLOCK_ENTITY_TYPE_REGISTRY, () -> {
+       return TileEntityType.FURNACE;
+    });
+-   public static final DefaultedRegistry<PaintingType> MOTIVE = registerDefaulted(MOTIVE_REGISTRY, "kebab", () -> {
++   @Deprecated public static final DefaultedRegistry<PaintingType> MOTIVE = forge(MOTIVE_REGISTRY, "kebab", () -> {
+       return PaintingType.KEBAB;
+    });
+    public static final Registry<ResourceLocation> CUSTOM_STAT = registerSimple(CUSTOM_STAT_REGISTRY, () -> {
+       return Stats.JUMP;
+    });
+-   public static final DefaultedRegistry<ChunkStatus> CHUNK_STATUS = registerDefaulted(CHUNK_STATUS_REGISTRY, "empty", () -> {
++   @Deprecated public static final DefaultedRegistry<ChunkStatus> CHUNK_STATUS = forge(CHUNK_STATUS_REGISTRY, "empty", () -> {
+       return ChunkStatus.EMPTY;
+    });
+    public static final Registry<IRuleTestType<?>> RULE_TEST = registerSimple(RULE_TEST_REGISTRY, () -> {
+@@ -178,40 +_,40 @@
+    public static final Registry<IPosRuleTests<?>> POS_RULE_TEST = registerSimple(POS_RULE_TEST_REGISTRY, () -> {
+       return IPosRuleTests.ALWAYS_TRUE_TEST;
+    });
+-   public static final Registry<ContainerType<?>> MENU = registerSimple(MENU_REGISTRY, () -> {
++   @Deprecated public static final Registry<ContainerType<?>> MENU = forge(MENU_REGISTRY, () -> {
+       return ContainerType.ANVIL;
+    });
+    public static final Registry<IRecipeType<?>> RECIPE_TYPE = registerSimple(RECIPE_TYPE_REGISTRY, () -> {
+       return IRecipeType.CRAFTING;
+    });
+-   public static final Registry<IRecipeSerializer<?>> RECIPE_SERIALIZER = registerSimple(RECIPE_SERIALIZER_REGISTRY, () -> {
++   @Deprecated public static final Registry<IRecipeSerializer<?>> RECIPE_SERIALIZER = forge(RECIPE_SERIALIZER_REGISTRY, () -> {
+       return IRecipeSerializer.SHAPELESS_RECIPE;
+    });
+-   public static final Registry<Attribute> ATTRIBUTE = registerSimple(ATTRIBUTE_REGISTRY, () -> {
++   @Deprecated public static final Registry<Attribute> ATTRIBUTE = forge(ATTRIBUTE_REGISTRY, () -> {
+       return Attributes.LUCK;
+    });
+-   public static final Registry<StatType<?>> STAT_TYPE = registerSimple(STAT_TYPE_REGISTRY, () -> {
++   @Deprecated public static final Registry<StatType<?>> STAT_TYPE = forge(STAT_TYPE_REGISTRY, () -> {
+       return Stats.ITEM_USED;
+    });
+    public static final DefaultedRegistry<VillagerType> VILLAGER_TYPE = registerDefaulted(VILLAGER_TYPE_REGISTRY, "plains", () -> {
+       return VillagerType.PLAINS;
+    });
+-   public static final DefaultedRegistry<VillagerProfession> VILLAGER_PROFESSION = registerDefaulted(VILLAGER_PROFESSION_REGISTRY, "none", () -> {
++   @Deprecated public static final DefaultedRegistry<VillagerProfession> VILLAGER_PROFESSION = forge(VILLAGER_PROFESSION_REGISTRY, "none", () -> {
+       return VillagerProfession.NONE;
+    });
+-   public static final DefaultedRegistry<PointOfInterestType> POINT_OF_INTEREST_TYPE = registerDefaulted(POINT_OF_INTEREST_TYPE_REGISTRY, "unemployed", () -> {
++   @Deprecated public static final DefaultedRegistry<PointOfInterestType> POINT_OF_INTEREST_TYPE = forge(POINT_OF_INTEREST_TYPE_REGISTRY, "unemployed", () -> {
+       return PointOfInterestType.UNEMPLOYED;
+    });
+-   public static final DefaultedRegistry<MemoryModuleType<?>> MEMORY_MODULE_TYPE = registerDefaulted(MEMORY_MODULE_TYPE_REGISTRY, "dummy", () -> {
++   @Deprecated public static final DefaultedRegistry<MemoryModuleType<?>> MEMORY_MODULE_TYPE = forge(MEMORY_MODULE_TYPE_REGISTRY, "dummy", () -> {
+       return MemoryModuleType.DUMMY;
+    });
+-   public static final DefaultedRegistry<SensorType<?>> SENSOR_TYPE = registerDefaulted(SENSOR_TYPE_REGISTRY, "dummy", () -> {
++   @Deprecated public static final DefaultedRegistry<SensorType<?>> SENSOR_TYPE = forge(SENSOR_TYPE_REGISTRY, "dummy", () -> {
+       return SensorType.DUMMY;
+    });
+-   public static final Registry<Schedule> SCHEDULE = registerSimple(SCHEDULE_REGISTRY, () -> {
++   @Deprecated public static final Registry<Schedule> SCHEDULE = forge(SCHEDULE_REGISTRY, () -> {
+       return Schedule.EMPTY;
+    });
+-   public static final Registry<Activity> ACTIVITY = registerSimple(ACTIVITY_REGISTRY, () -> {
++   @Deprecated public static final Registry<Activity> ACTIVITY = forge(ACTIVITY_REGISTRY, () -> {
+       return Activity.IDLE;
+    });
+    public static final Registry<LootPoolEntryType> LOOT_POOL_ENTRY_TYPE = registerSimple(LOOT_ENTRY_REGISTRY, () -> {
+@@ -232,19 +_,19 @@
+    public static final RegistryKey<Registry<JigsawPattern>> TEMPLATE_POOL_REGISTRY = createRegistryKey("worldgen/template_pool");
+    public static final RegistryKey<Registry<Biome>> BIOME_REGISTRY = createRegistryKey("worldgen/biome");
+    public static final RegistryKey<Registry<SurfaceBuilder<?>>> SURFACE_BUILDER_REGISTRY = createRegistryKey("worldgen/surface_builder");
+-   public static final Registry<SurfaceBuilder<?>> SURFACE_BUILDER = registerSimple(SURFACE_BUILDER_REGISTRY, () -> {
++   @Deprecated public static final Registry<SurfaceBuilder<?>> SURFACE_BUILDER = forge(SURFACE_BUILDER_REGISTRY, () -> {
+       return SurfaceBuilder.DEFAULT;
+    });
+    public static final RegistryKey<Registry<WorldCarver<?>>> CARVER_REGISTRY = createRegistryKey("worldgen/carver");
+-   public static final Registry<WorldCarver<?>> CARVER = registerSimple(CARVER_REGISTRY, () -> {
++   @Deprecated public static final Registry<WorldCarver<?>> CARVER = forge(CARVER_REGISTRY, () -> {
+       return WorldCarver.CAVE;
+    });
+    public static final RegistryKey<Registry<Feature<?>>> FEATURE_REGISTRY = createRegistryKey("worldgen/feature");
+-   public static final Registry<Feature<?>> FEATURE = registerSimple(FEATURE_REGISTRY, () -> {
++   @Deprecated public static final Registry<Feature<?>> FEATURE = forge(FEATURE_REGISTRY, () -> {
+       return Feature.ORE;
+    });
+    public static final RegistryKey<Registry<Structure<?>>> STRUCTURE_FEATURE_REGISTRY = createRegistryKey("worldgen/structure_feature");
+-   public static final Registry<Structure<?>> STRUCTURE_FEATURE = registerSimple(STRUCTURE_FEATURE_REGISTRY, () -> {
++   @Deprecated public static final Registry<Structure<?>> STRUCTURE_FEATURE = forge(STRUCTURE_FEATURE_REGISTRY, () -> {
+       return Structure.MINESHAFT;
+    });
+    public static final RegistryKey<Registry<IStructurePieceType>> STRUCTURE_PIECE_REGISTRY = createRegistryKey("worldgen/structure_piece");
+@@ -252,7 +_,7 @@
+       return IStructurePieceType.MINE_SHAFT_ROOM;
+    });
+    public static final RegistryKey<Registry<Placement<?>>> DECORATOR_REGISTRY = createRegistryKey("worldgen/decorator");
+-   public static final Registry<Placement<?>> DECORATOR = registerSimple(DECORATOR_REGISTRY, () -> {
++   @Deprecated public static final Registry<Placement<?>> DECORATOR = forge(DECORATOR_REGISTRY, () -> {
+       return Placement.NOPE;
+    });
+    public static final RegistryKey<Registry<BlockStateProviderType<?>>> BLOCK_STATE_PROVIDER_TYPE_REGISTRY = createRegistryKey("worldgen/block_state_provider_type");
+@@ -265,19 +_,19 @@
+    public static final RegistryKey<Registry<Codec<? extends ChunkGenerator>>> CHUNK_GENERATOR_REGISTRY = createRegistryKey("worldgen/chunk_generator");
+    public static final RegistryKey<Registry<IStructureProcessorType<?>>> STRUCTURE_PROCESSOR_REGISTRY = createRegistryKey("worldgen/structure_processor");
+    public static final RegistryKey<Registry<IJigsawDeserializer<?>>> STRUCTURE_POOL_ELEMENT_REGISTRY = createRegistryKey("worldgen/structure_pool_element");
+-   public static final Registry<BlockStateProviderType<?>> BLOCKSTATE_PROVIDER_TYPES = registerSimple(BLOCK_STATE_PROVIDER_TYPE_REGISTRY, () -> {
++   @Deprecated public static final Registry<BlockStateProviderType<?>> BLOCKSTATE_PROVIDER_TYPES = forge(BLOCK_STATE_PROVIDER_TYPE_REGISTRY, () -> {
+       return BlockStateProviderType.SIMPLE_STATE_PROVIDER;
+    });
+-   public static final Registry<BlockPlacerType<?>> BLOCK_PLACER_TYPES = registerSimple(BLOCK_PLACER_TYPE_REGISTRY, () -> {
++   @Deprecated public static final Registry<BlockPlacerType<?>> BLOCK_PLACER_TYPES = forge(BLOCK_PLACER_TYPE_REGISTRY, () -> {
+       return BlockPlacerType.SIMPLE_BLOCK_PLACER;
+    });
+-   public static final Registry<FoliagePlacerType<?>> FOLIAGE_PLACER_TYPES = registerSimple(FOLIAGE_PLACER_TYPE_REGISTRY, () -> {
++   @Deprecated public static final Registry<FoliagePlacerType<?>> FOLIAGE_PLACER_TYPES = forge(FOLIAGE_PLACER_TYPE_REGISTRY, () -> {
+       return FoliagePlacerType.BLOB_FOLIAGE_PLACER;
+    });
+    public static final Registry<TrunkPlacerType<?>> TRUNK_PLACER_TYPES = registerSimple(TRUNK_PLACER_TYPE_REGISTRY, () -> {
+       return TrunkPlacerType.STRAIGHT_TRUNK_PLACER;
+    });
+-   public static final Registry<TreeDecoratorType<?>> TREE_DECORATOR_TYPES = registerSimple(TREE_DECORATOR_TYPE_REGISTRY, () -> {
++   @Deprecated public static final Registry<TreeDecoratorType<?>> TREE_DECORATOR_TYPES = forge(TREE_DECORATOR_TYPE_REGISTRY, () -> {
+       return TreeDecoratorType.LEAVE_VINE;
+    });
+    public static final Registry<FeatureSizeType<?>> FEATURE_SIZE_TYPES = registerSimple(FEATURE_SIZE_TYPE_REGISTRY, () -> {
+@@ -323,16 +_,32 @@
+       return registerSimple(p_239746_0_, Lifecycle.experimental(), p_239746_1_);
+    }
+ 
++   private static <T extends net.minecraftforge.registries.IForgeRegistryEntry<T>> Registry<T> forge(RegistryKey<? extends Registry<T>> key, Supplier<T> def) {
++      return forge(key, Lifecycle.experimental(), def);
++   }
++
+    private static <T> DefaultedRegistry<T> registerDefaulted(RegistryKey<? extends Registry<T>> p_239745_0_, String p_239745_1_, Supplier<T> p_239745_2_) {
+       return registerDefaulted(p_239745_0_, p_239745_1_, Lifecycle.experimental(), p_239745_2_);
+    }
+ 
++   private static <T extends net.minecraftforge.registries.IForgeRegistryEntry<T>> DefaultedRegistry<T> forge(RegistryKey<? extends Registry<T>> key, String defKey, Supplier<T> def) {
++      return forge(key, defKey, Lifecycle.experimental(), def);
++   }
++
+    private static <T> Registry<T> registerSimple(RegistryKey<? extends Registry<T>> p_239742_0_, Lifecycle p_239742_1_, Supplier<T> p_239742_2_) {
+       return internalRegister(p_239742_0_, new SimpleRegistry<>(p_239742_0_, p_239742_1_), p_239742_2_, p_239742_1_);
+    }
+ 
++   private static <T extends net.minecraftforge.registries.IForgeRegistryEntry<T>> Registry<T> forge(RegistryKey<? extends Registry<T>> key, Lifecycle cycle, Supplier<T> def) {
++      return internalRegister(key, net.minecraftforge.registries.GameData.getWrapper(key, cycle), def, cycle);
++   }
++
+    private static <T> DefaultedRegistry<T> registerDefaulted(RegistryKey<? extends Registry<T>> p_239744_0_, String p_239744_1_, Lifecycle p_239744_2_, Supplier<T> p_239744_3_) {
+       return internalRegister(p_239744_0_, new DefaultedRegistry<>(p_239744_1_, p_239744_0_, p_239744_2_), p_239744_3_, p_239744_2_);
++   }
++
++   private static <T extends net.minecraftforge.registries.IForgeRegistryEntry<T>> DefaultedRegistry<T> forge(RegistryKey<? extends Registry<T>> key, String defKey, Lifecycle cycle, Supplier<T> def) {
++      return internalRegister(key, net.minecraftforge.registries.GameData.getWrapper(key, cycle, defKey), def, cycle);
+    }
+ 
+    private static <T, R extends MutableRegistry<T>> R internalRegister(RegistryKey<? extends Registry<T>> p_239743_0_, R p_239743_1_, Supplier<T> p_239743_2_, Lifecycle p_239743_3_) {

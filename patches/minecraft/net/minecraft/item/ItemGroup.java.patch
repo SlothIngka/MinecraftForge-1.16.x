@@ -1,0 +1,133 @@
+--- a/net/minecraft/item/ItemGroup.java
++++ b/net/minecraft/item/ItemGroup.java
+@@ -101,18 +_,23 @@
+    private final String langId;
+    private final ITextComponent displayName;
+    private String recipeFolderName;
++   @Deprecated
+    private String backgroundSuffix = "items.png";
++   private net.minecraft.util.ResourceLocation backgroundLocation;
+    private boolean canScroll = true;
+    private boolean showTitle = true;
+    private EnchantmentType[] enchantmentCategories = new EnchantmentType[0];
+    private ItemStack iconItemStack;
+ 
++   public ItemGroup(String label) {
++       this(-1, label);
++   }
++
+    public ItemGroup(int p_i1853_1_, String p_i1853_2_) {
+-      this.id = p_i1853_1_;
+       this.langId = p_i1853_2_;
+       this.displayName = new TranslationTextComponent("itemGroup." + p_i1853_2_);
+       this.iconItemStack = ItemStack.EMPTY;
+-      TABS[p_i1853_1_] = this;
++      this.id = addGroupSafe(p_i1853_1_, this);
+    }
+ 
+    @OnlyIn(Dist.CLIENT)
+@@ -141,16 +_,29 @@
+    @OnlyIn(Dist.CLIENT)
+    public abstract ItemStack makeIcon();
+ 
++   /**
++    * @deprecated Forge use {@link #getBackgroundImage()} instead
++    */
+    @OnlyIn(Dist.CLIENT)
++   @Deprecated
+    public String getBackgroundSuffix() {
+       return this.backgroundSuffix;
+    }
+ 
++   /**
++    * @deprecated Forge: use {@link #setBackgroundImage(net.minecraft.util.ResourceLocation)} instead
++    */
++   @Deprecated
+    public ItemGroup setBackgroundSuffix(String p_78025_1_) {
+       this.backgroundSuffix = p_78025_1_;
+       return this;
+    }
+ 
++   public ItemGroup setBackgroundImage(net.minecraft.util.ResourceLocation texture) {
++      this.backgroundLocation = texture;
++      return this;
++   }
++
+    public ItemGroup setRecipeFolderName(String p_199783_1_) {
+       this.recipeFolderName = p_199783_1_;
+       return this;
+@@ -178,11 +_,13 @@
+ 
+    @OnlyIn(Dist.CLIENT)
+    public int getColumn() {
++      if (id > 11) return ((id - 12) % 10) % 5;
+       return this.id % 6;
+    }
+ 
+    @OnlyIn(Dist.CLIENT)
+    public boolean isTopRow() {
++      if (id > 11) return ((id - 12) % 10) < 5;
+       return this.id < 6;
+    }
+ 
+@@ -218,5 +_,60 @@
+          item.fillItemCategory(this, p_78018_1_);
+       }
+ 
++   }
++
++   public int getTabPage() {
++      return id < 12 ? 0 : ((id - 12) / 10) + 1;
++   }
++
++   public boolean hasSearchBar() {
++      return id == TAB_SEARCH.id;
++   }
++
++   /**
++    * Gets the width of the search bar of the creative tab, use this if your
++    * creative tab name overflows together with a custom texture.
++    *
++    * @return The width of the search bar, 89 by default
++    */
++   public int getSearchbarWidth() {
++      return 89;
++   }
++
++   @OnlyIn(Dist.CLIENT)
++   public net.minecraft.util.ResourceLocation getBackgroundImage() {
++      if (backgroundLocation != null) return backgroundLocation; //FORGE: allow custom namespace
++      return new net.minecraft.util.ResourceLocation("textures/gui/container/creative_inventory/tab_" + this.getBackgroundSuffix());
++   }
++
++   private static final net.minecraft.util.ResourceLocation CREATIVE_INVENTORY_TABS = new net.minecraft.util.ResourceLocation("textures/gui/container/creative_inventory/tabs.png");
++   @OnlyIn(Dist.CLIENT)
++   public net.minecraft.util.ResourceLocation getTabsImage() {
++      return CREATIVE_INVENTORY_TABS;
++   }
++
++   public int getLabelColor() {
++      return 4210752;
++   }
++
++   public int getSlotColor() {
++      return -2130706433;
++   }
++
++   public static synchronized int getGroupCountSafe() {
++      return ItemGroup.TABS.length;
++   }
++
++   private static synchronized int addGroupSafe(int index, ItemGroup newGroup) {
++      if(index == -1) {
++         index = TABS.length;
++      }
++      if (index >= TABS.length) {
++         ItemGroup[] tmp = new ItemGroup[index + 1];
++         System.arraycopy(TABS, 0, tmp, 0, TABS.length);
++         TABS = tmp;
++      }
++      TABS[index] = newGroup;
++      return index;
+    }
+ }

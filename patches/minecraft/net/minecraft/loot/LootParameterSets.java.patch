@@ -1,0 +1,18 @@
+--- a/net/minecraft/loot/LootParameterSets.java
++++ b/net/minecraft/loot/LootParameterSets.java
+@@ -12,6 +_,7 @@
+    });
+    public static final LootParameterSet CHEST = register("chest", (p_216259_0_) -> {
+       p_216259_0_.required(LootParameters.ORIGIN).optional(LootParameters.THIS_ENTITY);
++      p_216259_0_.optional(LootParameters.KILLER_ENTITY); //Forge: Chest Minecarts can have killers.
+    });
+    public static final LootParameterSet COMMAND = register("command", (p_216250_0_) -> {
+       p_216250_0_.required(LootParameters.ORIGIN).optional(LootParameters.THIS_ENTITY);
+@@ -21,6 +_,7 @@
+    });
+    public static final LootParameterSet FISHING = register("fishing", (p_216258_0_) -> {
+       p_216258_0_.required(LootParameters.ORIGIN).required(LootParameters.TOOL).optional(LootParameters.THIS_ENTITY);
++      p_216258_0_.optional(LootParameters.KILLER_ENTITY).optional(LootParameters.THIS_ENTITY); //Forge: Allow fisher, and bobber
+    });
+    public static final LootParameterSet ENTITY = register("entity", (p_216251_0_) -> {
+       p_216251_0_.required(LootParameters.THIS_ENTITY).required(LootParameters.ORIGIN).required(LootParameters.DAMAGE_SOURCE).optional(LootParameters.KILLER_ENTITY).optional(LootParameters.DIRECT_KILLER_ENTITY).optional(LootParameters.LAST_DAMAGE_PLAYER);

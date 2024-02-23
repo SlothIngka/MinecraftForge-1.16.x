@@ -1,0 +1,28 @@
+--- a/net/minecraft/entity/item/BoatEntity.java
++++ b/net/minecraft/entity/item/BoatEntity.java
+@@ -468,7 +_,7 @@
+                      blockpos$mutable.set(l1, k2, i2);
+                      BlockState blockstate = this.level.getBlockState(blockpos$mutable);
+                      if (!(blockstate.getBlock() instanceof LilyPadBlock) && VoxelShapes.joinIsNotEmpty(blockstate.getCollisionShape(this.level, blockpos$mutable).move((double)l1, (double)k2, (double)i2), voxelshape, IBooleanFunction.AND)) {
+-                        f += blockstate.getBlock().getFriction();
++                        f += blockstate.getSlipperiness(this.level, blockpos$mutable, this);
+                         ++k1;
+                      }
+                   }
+@@ -815,6 +_,16 @@
+ 
+    public boolean isUnderWater() {
+       return this.status == BoatEntity.Status.UNDER_WATER || this.status == BoatEntity.Status.UNDER_FLOWING_WATER;
++   }
++
++   // Forge: Fix MC-119811 by instantly completing lerp on board
++   @Override
++   protected void addPassenger(Entity passenger) {
++      super.addPassenger(passenger);
++      if (this.isControlledByLocalInstance() && this.lerpSteps > 0) {
++         this.lerpSteps = 0;
++         this.absMoveTo(this.lerpX, this.lerpY, this.lerpZ, (float)this.lerpYRot, (float)this.lerpXRot);
++      }
+    }
+ 
+    public static enum Status {

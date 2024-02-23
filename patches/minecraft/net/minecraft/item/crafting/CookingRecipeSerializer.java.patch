@@ -1,0 +1,30 @@
+--- a/net/minecraft/item/crafting/CookingRecipeSerializer.java
++++ b/net/minecraft/item/crafting/CookingRecipeSerializer.java
+@@ -8,7 +_,7 @@
+ import net.minecraft.util.ResourceLocation;
+ import net.minecraft.util.registry.Registry;
+ 
+-public class CookingRecipeSerializer<T extends AbstractCookingRecipe> implements IRecipeSerializer<T> {
++public class CookingRecipeSerializer<T extends AbstractCookingRecipe> extends net.minecraftforge.registries.ForgeRegistryEntry<IRecipeSerializer<?>> implements IRecipeSerializer<T> {
+    private final int defaultCookingTime;
+    private final CookingRecipeSerializer.IFactory<T> factory;
+ 
+@@ -21,11 +_,17 @@
+       String s = JSONUtils.getAsString(p_199425_2_, "group", "");
+       JsonElement jsonelement = (JsonElement)(JSONUtils.isArrayNode(p_199425_2_, "ingredient") ? JSONUtils.getAsJsonArray(p_199425_2_, "ingredient") : JSONUtils.getAsJsonObject(p_199425_2_, "ingredient"));
+       Ingredient ingredient = Ingredient.fromJson(jsonelement);
++      //Forge: Check if primitive string to keep vanilla or a object which can contain a count field.
++      if (!p_199425_2_.has("result")) throw new com.google.gson.JsonSyntaxException("Missing result, expected to find a string or object");
++      ItemStack itemstack;
++      if (p_199425_2_.get("result").isJsonObject()) itemstack = ShapedRecipe.itemFromJson(JSONUtils.getAsJsonObject(p_199425_2_, "result"));
++      else {
+       String s1 = JSONUtils.getAsString(p_199425_2_, "result");
+       ResourceLocation resourcelocation = new ResourceLocation(s1);
+-      ItemStack itemstack = new ItemStack(Registry.ITEM.getOptional(resourcelocation).orElseThrow(() -> {
++      itemstack = new ItemStack(Registry.ITEM.getOptional(resourcelocation).orElseThrow(() -> {
+          return new IllegalStateException("Item: " + s1 + " does not exist");
+       }));
++      }
+       float f = JSONUtils.getAsFloat(p_199425_2_, "experience", 0.0F);
+       int i = JSONUtils.getAsInt(p_199425_2_, "cookingtime", this.defaultCookingTime);
+       return this.factory.create(p_199425_1_, s, ingredient, itemstack, f, i);

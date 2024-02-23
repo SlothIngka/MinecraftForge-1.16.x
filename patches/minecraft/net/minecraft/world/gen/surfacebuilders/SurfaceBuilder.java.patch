@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/gen/surfacebuilders/SurfaceBuilder.java
++++ b/net/minecraft/world/gen/surfacebuilders/SurfaceBuilder.java
+@@ -8,7 +_,7 @@
+ import net.minecraft.world.biome.Biome;
+ import net.minecraft.world.chunk.IChunk;
+ 
+-public abstract class SurfaceBuilder<C extends ISurfaceBuilderConfig> {
++public abstract class SurfaceBuilder<C extends ISurfaceBuilderConfig> extends net.minecraftforge.registries.ForgeRegistryEntry<SurfaceBuilder<?>> {
+    private static final BlockState DIRT = Blocks.DIRT.defaultBlockState();
+    private static final BlockState GRASS_BLOCK = Blocks.GRASS_BLOCK.defaultBlockState();
+    private static final BlockState PODZOL = Blocks.PODZOL.defaultBlockState();

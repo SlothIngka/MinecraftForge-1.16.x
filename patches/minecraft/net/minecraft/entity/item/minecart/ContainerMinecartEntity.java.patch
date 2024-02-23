@@ -1,0 +1,67 @@
+--- a/net/minecraft/entity/item/minecart/ContainerMinecartEntity.java
++++ b/net/minecraft/entity/item/minecart/ContainerMinecartEntity.java
+@@ -118,17 +_,18 @@
+    }
+ 
+    @Nullable
+-   public Entity changeDimension(ServerWorld p_241206_1_) {
++   public Entity changeDimension(ServerWorld p_241206_1_, net.minecraftforge.common.util.ITeleporter teleporter) {
+       this.dropEquipment = false;
+-      return super.changeDimension(p_241206_1_);
++      return super.changeDimension(p_241206_1_, teleporter);
+    }
+ 
+-   public void remove() {
++   @Override
++   public void remove(boolean keepData) {
+       if (!this.level.isClientSide && this.dropEquipment) {
+          InventoryHelper.dropContents(this.level, this, this);
+       }
+ 
+-      super.remove();
++      super.remove(keepData);
+    }
+ 
+    protected void addAdditionalSaveData(CompoundNBT p_213281_1_) {
+@@ -157,6 +_,8 @@
+    }
+ 
+    public ActionResultType interact(PlayerEntity p_184230_1_, Hand p_184230_2_) {
++      ActionResultType ret = super.interact(p_184230_1_, p_184230_2_);
++      if (ret.consumesAction()) return ret;
+       p_184230_1_.openMenu(this);
+       if (!p_184230_1_.level.isClientSide) {
+          PiglinTasks.angerNearbyPiglins(p_184230_1_, true);
+@@ -185,6 +_,8 @@
+ 
+          this.lootTable = null;
+          LootContext.Builder lootcontext$builder = (new LootContext.Builder((ServerWorld)this.level)).withParameter(LootParameters.ORIGIN, this.position()).withOptionalRandomSeed(this.lootTableSeed);
++         // Forge: add this entity to loot context, however, currently Vanilla uses 'this' for the player creating the chests. So we take over 'killer_entity' for this.
++         lootcontext$builder.withParameter(LootParameters.KILLER_ENTITY, this);
+          if (p_184288_1_ != null) {
+             lootcontext$builder.withLuck(p_184288_1_.getLuck()).withParameter(LootParameters.THIS_ENTITY, p_184288_1_);
+          }
+@@ -215,4 +_,23 @@
+    }
+ 
+    protected abstract Container createMenu(int p_213968_1_, PlayerInventory p_213968_2_);
++
++   private net.minecraftforge.common.util.LazyOptional<?> itemHandler = net.minecraftforge.common.util.LazyOptional.of(() -> new net.minecraftforge.items.wrapper.InvWrapper(this));
++
++   @Override
++   public <T> net.minecraftforge.common.util.LazyOptional<T> getCapability(net.minecraftforge.common.capabilities.Capability<T> capability, @Nullable net.minecraft.util.Direction facing) {
++      if (this.isAlive() && capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
++         return itemHandler.cast();
++      return super.getCapability(capability, facing);
++   }
++
++   @Override
++   protected void invalidateCaps() {
++      super.invalidateCaps();
++      itemHandler.invalidate();
++   }
++
++   public void dropContentsWhenDead(boolean value) {
++      this.dropEquipment = value;
++   }
+ }

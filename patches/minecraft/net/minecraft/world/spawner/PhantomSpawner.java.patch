@@ -1,0 +1,10 @@
+--- a/net/minecraft/world/spawner/PhantomSpawner.java
++++ b/net/minecraft/world/spawner/PhantomSpawner.java
+@@ -58,6 +_,7 @@
+                                  for(int i1 = 0; i1 < l; ++i1) {
+                                     PhantomEntity phantomentity = EntityType.PHANTOM.create(p_230253_1_);
+                                     phantomentity.moveTo(blockpos1, 0.0F, 0.0F);
++                                    if(net.minecraftforge.common.ForgeHooks.canEntitySpawn(phantomentity, p_230253_1_, blockpos1.getX(), blockpos1.getY(), blockpos1.getZ(), null, SpawnReason.NATURAL) == -1) return 0;
+                                     ilivingentitydata = phantomentity.finalizeSpawn(p_230253_1_, difficultyinstance, SpawnReason.NATURAL, ilivingentitydata, (CompoundNBT)null);
+                                     p_230253_1_.addFreshEntityWithPassengers(phantomentity);
+                                  }

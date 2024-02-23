@@ -1,0 +1,19 @@
+--- a/net/minecraft/block/ComparatorBlock.java
++++ b/net/minecraft/block/ComparatorBlock.java
+@@ -154,4 +_,16 @@
+    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
+       p_206840_1_.add(FACING, MODE, POWERED);
+    }
++
++   @Override
++   public boolean getWeakChanges(BlockState state, net.minecraft.world.IWorldReader world, BlockPos pos) {
++      return state.is(Blocks.COMPARATOR);
++   }
++
++   @Override
++   public void onNeighborChange(BlockState state, net.minecraft.world.IWorldReader world, BlockPos pos, BlockPos neighbor) {
++      if (pos.getY() == neighbor.getY() && world instanceof World && !((World)world).isClientSide()) {
++         state.neighborChanged((World)world, pos, world.getBlockState(neighbor).getBlock(), neighbor, false);
++      }
++   }
+ }

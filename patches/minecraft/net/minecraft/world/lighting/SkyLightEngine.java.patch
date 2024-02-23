@@ -1,0 +1,12 @@
+--- a/net/minecraft/world/lighting/SkyLightEngine.java
++++ b/net/minecraft/world/lighting/SkyLightEngine.java
+@@ -228,4 +_,9 @@
+    public String getDebugData(long p_215614_1_) {
+       return super.getDebugData(p_215614_1_) + (this.storage.isAboveData(p_215614_1_) ? "*" : "");
+    }
++
++   @Override
++   public int queuedUpdateSize() {
++      return 0;
++   }
+ }

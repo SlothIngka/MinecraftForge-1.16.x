@@ -1,0 +1,34 @@
+--- a/net/minecraft/item/ShovelItem.java
++++ b/net/minecraft/item/ShovelItem.java
+@@ -22,7 +_,7 @@
+    protected static final Map<Block, BlockState> FLATTENABLES = Maps.newHashMap(ImmutableMap.of(Blocks.GRASS_BLOCK, Blocks.GRASS_PATH.defaultBlockState()));
+ 
+    public ShovelItem(IItemTier p_i48469_1_, float p_i48469_2_, float p_i48469_3_, Item.Properties p_i48469_4_) {
+-      super(p_i48469_2_, p_i48469_3_, p_i48469_1_, DIGGABLES, p_i48469_4_);
++      super(p_i48469_2_, p_i48469_3_, p_i48469_1_, DIGGABLES, p_i48469_4_.addToolType(net.minecraftforge.common.ToolType.SHOVEL, p_i48469_1_.getLevel()));
+    }
+ 
+    public boolean isCorrectToolForDrops(BlockState p_150897_1_) {
+@@ -37,9 +_,9 @@
+          return ActionResultType.PASS;
+       } else {
+          PlayerEntity playerentity = p_195939_1_.getPlayer();
+-         BlockState blockstate1 = FLATTENABLES.get(blockstate.getBlock());
++         BlockState blockstate1 = blockstate.getToolModifiedState(world, blockpos, playerentity, p_195939_1_.getItemInHand(), net.minecraftforge.common.ToolType.SHOVEL);
+          BlockState blockstate2 = null;
+-         if (blockstate1 != null && world.getBlockState(blockpos.above()).isAir()) {
++         if (blockstate1 != null && world.isEmptyBlock(blockpos.above())) {
+             world.playSound(playerentity, blockpos, SoundEvents.SHOVEL_FLATTEN, SoundCategory.BLOCKS, 1.0F, 1.0F);
+             blockstate2 = blockstate1;
+          } else if (blockstate.getBlock() instanceof CampfireBlock && blockstate.getValue(CampfireBlock.LIT)) {
+@@ -66,5 +_,10 @@
+             return ActionResultType.PASS;
+          }
+       }
++   }
++
++   @javax.annotation.Nullable
++   public static BlockState getShovelPathingState(BlockState originalState) {
++      return FLATTENABLES.get(originalState.getBlock());
+    }
+ }

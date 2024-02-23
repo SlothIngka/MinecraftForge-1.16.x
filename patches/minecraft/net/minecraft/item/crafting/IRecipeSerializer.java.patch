@@ -1,0 +1,19 @@
+--- a/net/minecraft/item/crafting/IRecipeSerializer.java
++++ b/net/minecraft/item/crafting/IRecipeSerializer.java
+@@ -5,7 +_,7 @@
+ import net.minecraft.util.ResourceLocation;
+ import net.minecraft.util.registry.Registry;
+ 
+-public interface IRecipeSerializer<T extends IRecipe<?>> {
++public interface IRecipeSerializer<T extends IRecipe<?>> extends net.minecraftforge.registries.IForgeRegistryEntry<IRecipeSerializer<?>> {
+    IRecipeSerializer<ShapedRecipe> SHAPED_RECIPE = register("crafting_shaped", new ShapedRecipe.Serializer());
+    IRecipeSerializer<ShapelessRecipe> SHAPELESS_RECIPE = register("crafting_shapeless", new ShapelessRecipe.Serializer());
+    SpecialRecipeSerializer<ArmorDyeRecipe> ARMOR_DYE = register("crafting_special_armordye", new SpecialRecipeSerializer<>(ArmorDyeRecipe::new));
+@@ -30,6 +_,7 @@
+ 
+    T fromJson(ResourceLocation p_199425_1_, JsonObject p_199425_2_);
+ 
++   @javax.annotation.Nullable
+    T fromNetwork(ResourceLocation p_199426_1_, PacketBuffer p_199426_2_);
+ 
+    void toNetwork(PacketBuffer p_199427_1_, T p_199427_2_);

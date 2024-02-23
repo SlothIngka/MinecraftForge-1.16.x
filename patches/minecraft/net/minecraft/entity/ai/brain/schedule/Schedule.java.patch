@@ -1,0 +1,11 @@
+--- a/net/minecraft/entity/ai/brain/schedule/Schedule.java
++++ b/net/minecraft/entity/ai/brain/schedule/Schedule.java
+@@ -8,7 +_,7 @@
+ import java.util.stream.Collectors;
+ import net.minecraft.util.registry.Registry;
+ 
+-public class Schedule {
++public class Schedule extends net.minecraftforge.registries.ForgeRegistryEntry<Schedule> {
+    public static final Schedule EMPTY = register("empty").changeActivityAt(0, Activity.IDLE).build();
+    public static final Schedule SIMPLE = register("simple").changeActivityAt(5000, Activity.WORK).changeActivityAt(11000, Activity.REST).build();
+    public static final Schedule VILLAGER_BABY = register("villager_baby").changeActivityAt(10, Activity.IDLE).changeActivityAt(3000, Activity.PLAY).changeActivityAt(6000, Activity.IDLE).changeActivityAt(10000, Activity.PLAY).changeActivityAt(12000, Activity.REST).build();

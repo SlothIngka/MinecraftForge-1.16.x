@@ -1,0 +1,38 @@
+--- a/net/minecraft/entity/merchant/villager/VillagerEntity.java
++++ b/net/minecraft/entity/merchant/villager/VillagerEntity.java
+@@ -241,7 +_,7 @@
+ 
+    public ActionResultType mobInteract(PlayerEntity p_230254_1_, Hand p_230254_2_) {
+       ItemStack itemstack = p_230254_1_.getItemInHand(p_230254_2_);
+-      if (itemstack.getItem() != Items.VILLAGER_SPAWN_EGG && this.isAlive() && !this.isTrading() && !this.isSleeping()) {
++      if (itemstack.getItem() != Items.VILLAGER_SPAWN_EGG && this.isAlive() && !this.isTrading() && !this.isSleeping() && !p_230254_1_.isSecondaryUseActive()) {
+          if (this.isBaby()) {
+             this.setUnhappy();
+             return ActionResultType.sidedSuccess(this.level.isClientSide);
+@@ -634,7 +_,8 @@
+    }
+ 
+    protected ITextComponent getTypeName() {
+-      return new TranslationTextComponent(this.getType().getDescriptionId() + '.' + Registry.VILLAGER_PROFESSION.getKey(this.getVillagerData().getProfession()).getPath());
++      net.minecraft.util.ResourceLocation profName = this.getVillagerData().getProfession().getRegistryName();
++      return new TranslationTextComponent(this.getType().getDescriptionId() + '.' + (!"minecraft".equals(profName.getNamespace()) ? profName.getNamespace() + '.' : "") + profName.getPath());
+    }
+ 
+    @OnlyIn(Dist.CLIENT)
+@@ -687,7 +_,7 @@
+    }
+ 
+    public void thunderHit(ServerWorld p_241841_1_, LightningBoltEntity p_241841_2_) {
+-      if (p_241841_1_.getDifficulty() != Difficulty.PEACEFUL) {
++      if (p_241841_1_.getDifficulty() != Difficulty.PEACEFUL && net.minecraftforge.event.ForgeEventFactory.canLivingConvert(this, EntityType.WITCH, (timer) -> {})) {
+          LOGGER.info("Villager {} was struck by lightning {}.", this, p_241841_2_);
+          WitchEntity witchentity = EntityType.WITCH.create(p_241841_1_);
+          witchentity.moveTo(this.getX(), this.getY(), this.getZ(), this.yRot, this.xRot);
+@@ -699,6 +_,7 @@
+          }
+ 
+          witchentity.setPersistenceRequired();
++         net.minecraftforge.event.ForgeEventFactory.onLivingConvert(this, witchentity);
+          p_241841_1_.addFreshEntityWithPassengers(witchentity);
+          this.releaseAllPois();
+          this.remove();

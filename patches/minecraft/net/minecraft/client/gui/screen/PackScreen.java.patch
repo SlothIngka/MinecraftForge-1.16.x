@@ -1,0 +1,11 @@
+--- a/net/minecraft/client/gui/screen/PackScreen.java
++++ b/net/minecraft/client/gui/screen/PackScreen.java
+@@ -129,7 +_,7 @@
+ 
+    private void updateList(net.minecraft.client.gui.widget.list.ResourcePackList p_238899_1_, Stream<PackLoadingManager.IPack> p_238899_2_) {
+       p_238899_1_.children().clear();
+-      p_238899_2_.forEach((p_238898_2_) -> {
++      p_238899_2_.filter(PackLoadingManager.IPack::notHidden).forEach((p_238898_2_) -> {
+          p_238899_1_.children().add(new net.minecraft.client.gui.widget.list.ResourcePackList.ResourcePackEntry(this.minecraft, p_238899_1_, this, p_238898_2_));
+       });
+    }

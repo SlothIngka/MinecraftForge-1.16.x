@@ -1,0 +1,28 @@
+--- a/net/minecraft/world/storage/PlayerData.java
++++ b/net/minecraft/world/storage/PlayerData.java
+@@ -31,6 +_,7 @@
+          File file2 = new File(this.playerDir, p_237335_1_.getStringUUID() + ".dat");
+          File file3 = new File(this.playerDir, p_237335_1_.getStringUUID() + ".dat_old");
+          Util.safeReplaceFile(file2, file1, file3);
++         net.minecraftforge.event.ForgeEventFactory.firePlayerSavingEvent(p_237335_1_, playerDir, p_237335_1_.getStringUUID());
+       } catch (Exception exception) {
+          LOGGER.warn("Failed to save player data for {}", (Object)p_237335_1_.getName().getString());
+       }
+@@ -54,6 +_,7 @@
+          int i = compoundnbt.contains("DataVersion", 3) ? compoundnbt.getInt("DataVersion") : -1;
+          p_237336_1_.load(NBTUtil.update(this.fixerUpper, DefaultTypeReferences.PLAYER, compoundnbt, i));
+       }
++      net.minecraftforge.event.ForgeEventFactory.firePlayerLoadingEvent(p_237336_1_, playerDir, p_237336_1_.getStringUUID());
+ 
+       return compoundnbt;
+    }
+@@ -71,5 +_,9 @@
+       }
+ 
+       return astring;
++   }
++
++   public File getPlayerDataFolder() {
++      return playerDir;
+    }
+ }

@@ -1,0 +1,20 @@
+--- a/net/minecraft/block/TrapDoorBlock.java
++++ b/net/minecraft/block/TrapDoorBlock.java
+@@ -147,4 +_,17 @@
+ 
+       return super.updateShape(p_196271_1_, p_196271_2_, p_196271_3_, p_196271_4_, p_196271_5_, p_196271_6_);
+    }
++
++   //Forge Start
++   @Override
++   public boolean isLadder(BlockState state, net.minecraft.world.IWorldReader world, BlockPos pos, net.minecraft.entity.LivingEntity entity) {
++      if (state.getValue(OPEN)) {
++         BlockPos downPos = pos.below();
++         BlockState down = world.getBlockState(downPos);
++         return down.getBlock().makesOpenTrapdoorAboveClimbable(down, world, downPos, state);
++      }
++      return false;
++   }
++   //Forge End
++
+ }

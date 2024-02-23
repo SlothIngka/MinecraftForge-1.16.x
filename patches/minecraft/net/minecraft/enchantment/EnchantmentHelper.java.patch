@@ -1,0 +1,29 @@
+--- a/net/minecraft/enchantment/EnchantmentHelper.java
++++ b/net/minecraft/enchantment/EnchantmentHelper.java
+@@ -274,7 +_,7 @@
+ 
+    public static int getEnchantmentCost(Random p_77514_0_, int p_77514_1_, int p_77514_2_, ItemStack p_77514_3_) {
+       Item item = p_77514_3_.getItem();
+-      int i = item.getEnchantmentValue();
++      int i = p_77514_3_.getItemEnchantability();
+       if (i <= 0) {
+          return 0;
+       } else {
+@@ -312,7 +_,7 @@
+    public static List<EnchantmentData> selectEnchantment(Random p_77513_0_, ItemStack p_77513_1_, int p_77513_2_, boolean p_77513_3_) {
+       List<EnchantmentData> list = Lists.newArrayList();
+       Item item = p_77513_1_.getItem();
+-      int i = item.getEnchantmentValue();
++      int i = p_77513_1_.getItemEnchantability();
+       if (i <= 0) {
+          return list;
+       } else {
+@@ -365,7 +_,7 @@
+       boolean flag = p_185291_1_.getItem() == Items.BOOK;
+ 
+       for(Enchantment enchantment : Registry.ENCHANTMENT) {
+-         if ((!enchantment.isTreasureOnly() || p_185291_2_) && enchantment.isDiscoverable() && (enchantment.category.canEnchant(item) || flag)) {
++         if ((!enchantment.isTreasureOnly() || p_185291_2_) && enchantment.isDiscoverable() && (enchantment.canApplyAtEnchantingTable(p_185291_1_) || (flag && enchantment.isAllowedOnBooks()))) {
+             for(int i = enchantment.getMaxLevel(); i > enchantment.getMinLevel() - 1; --i) {
+                if (p_185291_0_ >= enchantment.getMinCost(i) && p_185291_0_ <= enchantment.getMaxCost(i)) {
+                   list.add(new EnchantmentData(enchantment, i));

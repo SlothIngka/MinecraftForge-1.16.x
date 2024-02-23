@@ -1,0 +1,16 @@
+--- a/net/minecraft/block/SpawnerBlock.java
++++ b/net/minecraft/block/SpawnerBlock.java
+@@ -18,8 +_,11 @@
+ 
+    public void spawnAfterBreak(BlockState p_220062_1_, ServerWorld p_220062_2_, BlockPos p_220062_3_, ItemStack p_220062_4_) {
+       super.spawnAfterBreak(p_220062_1_, p_220062_2_, p_220062_3_, p_220062_4_);
+-      int i = 15 + p_220062_2_.random.nextInt(15) + p_220062_2_.random.nextInt(15);
+-      this.popExperience(p_220062_2_, p_220062_3_, i);
++   }
++
++   @Override
++   public int getExpDrop(BlockState state, net.minecraft.world.IWorldReader world, BlockPos pos, int fortune, int silktouch) {
++      return 15 + RANDOM.nextInt(15) + RANDOM.nextInt(15);
+    }
+ 
+    public BlockRenderType getRenderShape(BlockState p_149645_1_) {

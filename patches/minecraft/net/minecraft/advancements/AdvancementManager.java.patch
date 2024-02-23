@@ -1,0 +1,13 @@
+--- a/net/minecraft/advancements/AdvancementManager.java
++++ b/net/minecraft/advancements/AdvancementManager.java
+@@ -36,6 +_,10 @@
+          try {
+             JsonObject jsonobject = JSONUtils.convertToJsonObject(p_240923_3_, "advancement");
+             Advancement.Builder advancement$builder = Advancement.Builder.fromJson(jsonobject, new ConditionArrayParser(p_240923_2_, this.predicateManager));
++            if (advancement$builder == null) {
++                LOGGER.debug("Skipping loading advancement {} as it's conditions were not met", p_240923_2_);
++                return;
++            }
+             map.put(p_240923_2_, advancement$builder);
+          } catch (IllegalArgumentException | JsonParseException jsonparseexception) {
+             LOGGER.error("Parsing error loading custom advancement {}: {}", p_240923_2_, jsonparseexception.getMessage());

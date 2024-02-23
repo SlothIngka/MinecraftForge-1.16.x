@@ -1,0 +1,20 @@
+--- a/net/minecraft/network/play/client/CCustomPayloadPacket.java
++++ b/net/minecraft/network/play/client/CCustomPayloadPacket.java
+@@ -9,7 +_,7 @@
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+-public class CCustomPayloadPacket implements IPacket<IServerPlayNetHandler> {
++public class CCustomPayloadPacket implements IPacket<IServerPlayNetHandler>, net.minecraftforge.fml.network.ICustomPacket<CCustomPayloadPacket> {
+    public static final ResourceLocation BRAND = new ResourceLocation("brand");
+    private ResourceLocation identifier;
+    private PacketBuffer data;
+@@ -35,7 +_,7 @@
+ 
+    public void write(PacketBuffer p_148840_1_) throws IOException {
+       p_148840_1_.writeResourceLocation(this.identifier);
+-      p_148840_1_.writeBytes((ByteBuf)this.data);
++      p_148840_1_.writeBytes((ByteBuf)this.data.copy()); //This may be access multiple times, from multiple threads, lets be safe like the S->C packet
+    }
+ 
+    public void handle(IServerPlayNetHandler p_148833_1_) {

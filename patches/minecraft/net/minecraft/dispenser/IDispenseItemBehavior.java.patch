@@ -1,0 +1,36 @@
+--- a/net/minecraft/dispenser/IDispenseItemBehavior.java
++++ b/net/minecraft/dispenser/IDispenseItemBehavior.java
+@@ -69,6 +_,7 @@
+ import net.minecraft.world.server.ServerWorld;
+ 
+ public interface IDispenseItemBehavior {
++   org.apache.logging.log4j.Logger LOGGER = org.apache.logging.log4j.LogManager.getLogger();
+    IDispenseItemBehavior NOOP = (p_210297_0_, p_210297_1_) -> {
+       return p_210297_1_;
+    };
+@@ -169,7 +_,12 @@
+          public ItemStack execute(IBlockSource p_82487_1_, ItemStack p_82487_2_) {
+             Direction direction = p_82487_1_.getBlockState().getValue(DispenserBlock.FACING);
+             EntityType<?> entitytype = ((SpawnEggItem)p_82487_2_.getItem()).getType(p_82487_2_.getTag());
+-            entitytype.spawn(p_82487_1_.getLevel(), p_82487_2_, (PlayerEntity)null, p_82487_1_.getPos().relative(direction), SpawnReason.DISPENSER, direction != Direction.UP, false);
++            try { // FORGE: fix potential crash
++               entitytype.spawn(p_82487_1_.getLevel(), p_82487_2_, (PlayerEntity) null, p_82487_1_.getPos().relative(direction), SpawnReason.DISPENSER, direction != Direction.UP, false);
++            } catch (Exception e) {
++               LOGGER.error("Error while dispensing spawn egg from dispenser at {}", p_82487_1_.getPos(), e);
++               return ItemStack.EMPTY;
++            }
+             p_82487_2_.shrink(1);
+             return p_82487_2_;
+          }
+@@ -373,8 +_,9 @@
+                world.setBlockAndUpdate(blockpos, AbstractFireBlock.getState(world, blockpos));
+             } else if (CampfireBlock.canLight(blockstate)) {
+                world.setBlockAndUpdate(blockpos, blockstate.setValue(BlockStateProperties.LIT, Boolean.valueOf(true)));
+-            } else if (blockstate.getBlock() instanceof TNTBlock) {
+-               TNTBlock.explode(world, blockpos);
++            } else if (blockstate.isFlammable(world, blockpos, p_82487_1_.getBlockState().getValue(DispenserBlock.FACING).getOpposite())) {
++               blockstate.catchFire(world, blockpos, p_82487_1_.getBlockState().getValue(DispenserBlock.FACING).getOpposite(), null);
++               if (blockstate.getBlock() instanceof TNTBlock)
+                world.removeBlock(blockpos, false);
+             } else {
+                this.setSuccess(false);

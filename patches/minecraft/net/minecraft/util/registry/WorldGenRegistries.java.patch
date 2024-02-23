@@ -1,0 +1,21 @@
+--- a/net/minecraft/util/registry/WorldGenRegistries.java
++++ b/net/minecraft/util/registry/WorldGenRegistries.java
+@@ -45,13 +_,17 @@
+       return ProcessorLists.ZOMBIE_PLAINS;
+    });
+    public static final Registry<JigsawPattern> TEMPLATE_POOL = registerSimple(Registry.TEMPLATE_POOL_REGISTRY, JigsawPatternRegistry::bootstrap);
+-   public static final Registry<Biome> BIOME = registerSimple(Registry.BIOME_REGISTRY, () -> {
++   @Deprecated public static final Registry<Biome> BIOME = forge(Registry.BIOME_REGISTRY, () -> {
+       return BiomeRegistry.PLAINS;
+    });
+    public static final Registry<DimensionSettings> NOISE_GENERATOR_SETTINGS = registerSimple(Registry.NOISE_GENERATOR_SETTINGS_REGISTRY, DimensionSettings::bootstrap);
+ 
+    private static <T> Registry<T> registerSimple(RegistryKey<? extends Registry<T>> p_243667_0_, Supplier<T> p_243667_1_) {
+       return registerSimple(p_243667_0_, Lifecycle.stable(), p_243667_1_);
++   }
++
++   private static <T extends net.minecraftforge.registries.IForgeRegistryEntry<T>> Registry<T> forge(RegistryKey<? extends Registry<T>> key, Supplier<T> def) {
++      return internalRegister(key, net.minecraftforge.registries.GameData.getWrapper(key, Lifecycle.stable()), def, Lifecycle.stable());
+    }
+ 
+    private static <T> Registry<T> registerSimple(RegistryKey<? extends Registry<T>> p_243665_0_, Lifecycle p_243665_1_, Supplier<T> p_243665_2_) {

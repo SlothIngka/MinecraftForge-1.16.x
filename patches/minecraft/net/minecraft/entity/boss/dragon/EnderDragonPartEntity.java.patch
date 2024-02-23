@@ -1,0 +1,18 @@
+--- a/net/minecraft/entity/boss/dragon/EnderDragonPartEntity.java
++++ b/net/minecraft/entity/boss/dragon/EnderDragonPartEntity.java
+@@ -7,13 +_,13 @@
+ import net.minecraft.network.IPacket;
+ import net.minecraft.util.DamageSource;
+ 
+-public class EnderDragonPartEntity extends Entity {
++public class EnderDragonPartEntity extends net.minecraftforge.entity.PartEntity<EnderDragonEntity> {
+    public final EnderDragonEntity parentMob;
+    public final String name;
+    private final EntitySize size;
+ 
+    public EnderDragonPartEntity(EnderDragonEntity p_i50232_1_, String p_i50232_2_, float p_i50232_3_, float p_i50232_4_) {
+-      super(p_i50232_1_.getType(), p_i50232_1_.level);
++      super(p_i50232_1_);
+       this.size = EntitySize.scalable(p_i50232_3_, p_i50232_4_);
+       this.refreshDimensions();
+       this.parentMob = p_i50232_1_;

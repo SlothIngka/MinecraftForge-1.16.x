@@ -1,0 +1,50 @@
+--- a/net/minecraft/item/BowItem.java
++++ b/net/minecraft/item/BowItem.java
+@@ -24,18 +_,23 @@
+          PlayerEntity playerentity = (PlayerEntity)p_77615_3_;
+          boolean flag = playerentity.abilities.instabuild || EnchantmentHelper.getItemEnchantmentLevel(Enchantments.INFINITY_ARROWS, p_77615_1_) > 0;
+          ItemStack itemstack = playerentity.getProjectile(p_77615_1_);
++
++         int i = this.getUseDuration(p_77615_1_) - p_77615_4_;
++         i = net.minecraftforge.event.ForgeEventFactory.onArrowLoose(p_77615_1_, p_77615_2_, playerentity, i, !itemstack.isEmpty() || flag);
++         if (i < 0) return;
++
+          if (!itemstack.isEmpty() || flag) {
+             if (itemstack.isEmpty()) {
+                itemstack = new ItemStack(Items.ARROW);
+             }
+ 
+-            int i = this.getUseDuration(p_77615_1_) - p_77615_4_;
+             float f = getPowerForTime(i);
+             if (!((double)f < 0.1D)) {
+-               boolean flag1 = flag && itemstack.getItem() == Items.ARROW;
++               boolean flag1 = playerentity.abilities.instabuild || (itemstack.getItem() instanceof ArrowItem && ((ArrowItem)itemstack.getItem()).isInfinite(itemstack, p_77615_1_, playerentity));
+                if (!p_77615_2_.isClientSide) {
+                   ArrowItem arrowitem = (ArrowItem)(itemstack.getItem() instanceof ArrowItem ? itemstack.getItem() : Items.ARROW);
+                   AbstractArrowEntity abstractarrowentity = arrowitem.createArrow(p_77615_2_, itemstack, playerentity);
++                  abstractarrowentity = customArrow(abstractarrowentity);
+                   abstractarrowentity.shootFromRotation(playerentity, playerentity.xRot, playerentity.yRot, 0.0F, f * 3.0F, 1.0F);
+                   if (f == 1.0F) {
+                      abstractarrowentity.setCritArrow(true);
+@@ -100,6 +_,10 @@
+    public ActionResult<ItemStack> use(World p_77659_1_, PlayerEntity p_77659_2_, Hand p_77659_3_) {
+       ItemStack itemstack = p_77659_2_.getItemInHand(p_77659_3_);
+       boolean flag = !p_77659_2_.getProjectile(itemstack).isEmpty();
++
++      ActionResult<ItemStack> ret = net.minecraftforge.event.ForgeEventFactory.onArrowNock(itemstack, p_77659_1_, p_77659_2_, p_77659_3_, flag);
++      if (ret != null) return ret;
++
+       if (!p_77659_2_.abilities.instabuild && !flag) {
+          return ActionResult.fail(itemstack);
+       } else {
+@@ -110,6 +_,10 @@
+ 
+    public Predicate<ItemStack> getAllSupportedProjectiles() {
+       return ARROW_ONLY;
++   }
++
++   public AbstractArrowEntity customArrow(AbstractArrowEntity arrow) {
++      return arrow;
+    }
+ 
+    public int getDefaultProjectileRange() {

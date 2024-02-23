@@ -1,0 +1,11 @@
+--- a/net/minecraft/block/DropperBlock.java
++++ b/net/minecraft/block/DropperBlock.java
+@@ -37,7 +_,7 @@
+          p_176439_1_.levelEvent(1001, p_176439_2_, 0);
+       } else {
+          ItemStack itemstack = dispensertileentity.getItem(i);
+-         if (!itemstack.isEmpty()) {
++         if (!itemstack.isEmpty() && net.minecraftforge.items.VanillaInventoryCodeHooks.dropperInsertHook(p_176439_1_, p_176439_2_, dispensertileentity, i, itemstack)) {
+             Direction direction = p_176439_1_.getBlockState(p_176439_2_).getValue(FACING);
+             IInventory iinventory = HopperTileEntity.getContainerAt(p_176439_1_, p_176439_2_.relative(direction));
+             ItemStack itemstack1;

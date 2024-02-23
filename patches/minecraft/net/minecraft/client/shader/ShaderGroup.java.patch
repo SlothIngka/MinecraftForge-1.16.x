@@ -1,0 +1,20 @@
+--- a/net/minecraft/client/shader/ShaderGroup.java
++++ b/net/minecraft/client/shader/ShaderGroup.java
+@@ -164,7 +_,8 @@
+                         throw new JSONException("Render target '" + s4 + "' can't be used as depth buffer");
+                      }
+ 
+-                     ResourceLocation resourcelocation = new ResourceLocation("textures/effect/" + s4 + ".png");
++                     ResourceLocation rl = ResourceLocation.tryParse(s4);
++                     ResourceLocation resourcelocation = new ResourceLocation(rl.getNamespace(), "textures/effect/" + rl.getPath() + ".png");
+                      IResource iresource = null;
+ 
+                      try {
+@@ -273,6 +_,7 @@
+    public void addTempTarget(String p_148020_1_, int p_148020_2_, int p_148020_3_) {
+       Framebuffer framebuffer = new Framebuffer(p_148020_2_, p_148020_3_, true, Minecraft.ON_OSX);
+       framebuffer.setClearColor(0.0F, 0.0F, 0.0F, 0.0F);
++      if (screenTarget.isStencilEnabled()) framebuffer.enableStencil();
+       this.customRenderTargets.put(p_148020_1_, framebuffer);
+       if (p_148020_2_ == this.screenWidth && p_148020_3_ == this.screenHeight) {
+          this.fullSizedTargets.add(framebuffer);

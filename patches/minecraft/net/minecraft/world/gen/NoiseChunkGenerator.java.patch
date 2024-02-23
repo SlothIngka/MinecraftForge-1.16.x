@@ -1,0 +1,31 @@
+--- a/net/minecraft/world/gen/NoiseChunkGenerator.java
++++ b/net/minecraft/world/gen/NoiseChunkGenerator.java
+@@ -525,8 +_,8 @@
+                         objectlistiterator1.back(objectlist1.size());
+                         BlockState blockstate = this.generateBaseState(d18, i2);
+                         if (blockstate != AIR) {
+-                           if (blockstate.getLightEmission() != 0) {
+-                              blockpos$mutable.set(i3, i2, l3);
++                           blockpos$mutable.set(i3, i2, l3);
++                           if (blockstate.getLightValue(chunkprimer, blockpos$mutable) != 0) {
+                               chunkprimer.addLight(blockpos$mutable);
+                            }
+ 
+@@ -582,6 +_,9 @@
+    }
+ 
+    public List<MobSpawnInfo.Spawners> getMobsAt(Biome p_230353_1_, StructureManager p_230353_2_, EntityClassification p_230353_3_, BlockPos p_230353_4_) {
++      List<MobSpawnInfo.Spawners> spawns = net.minecraftforge.common.world.StructureSpawnManager.getStructureSpawns(p_230353_2_, p_230353_3_, p_230353_4_);
++      if (spawns != null) return spawns;
++      if (false) {//Forge: We handle these hardcoded cases above in StructureSpawnManager#getStructureSpawns, but allow for insideOnly to be changed and allow for creatures to be spawned in ones other than just the witch hut
+       if (p_230353_2_.getStructureAt(p_230353_4_, true, Structure.SWAMP_HUT).isValid()) {
+          if (p_230353_3_ == EntityClassification.MONSTER) {
+             return Structure.SWAMP_HUT.getSpecialEnemies();
+@@ -604,6 +_,7 @@
+          if (p_230353_2_.getStructureAt(p_230353_4_, true, Structure.NETHER_BRIDGE).isValid()) {
+             return Structure.NETHER_BRIDGE.getSpecialEnemies();
+          }
++      }
+       }
+ 
+       return super.getMobsAt(p_230353_1_, p_230353_2_, p_230353_3_, p_230353_4_);

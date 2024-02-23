@@ -1,0 +1,16 @@
+--- a/net/minecraft/nbt/CompressedStreamTools.java
++++ b/net/minecraft/nbt/CompressedStreamTools.java
+@@ -106,10 +_,12 @@
+ 
+    private static INBT readUnnamedTag(DataInput p_152455_0_, int p_152455_1_, NBTSizeTracker p_152455_2_) throws IOException {
+       byte b0 = p_152455_0_.readByte();
++      p_152455_2_.accountBits(8); // Forge: Count everything!
+       if (b0 == 0) {
+          return EndNBT.INSTANCE;
+       } else {
+-         p_152455_0_.readUTF();
++         p_152455_2_.readUTF(p_152455_0_.readUTF()); //Forge: Count this string.
++         p_152455_2_.accountBits(32); //Forge: 4 extra bytes for the object allocation.
+ 
+          try {
+             return NBTTypes.getType(b0).load(p_152455_0_, p_152455_1_, p_152455_2_);

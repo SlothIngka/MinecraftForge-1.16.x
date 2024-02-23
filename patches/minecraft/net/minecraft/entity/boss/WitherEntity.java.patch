@@ -1,0 +1,37 @@
+--- a/net/minecraft/entity/boss/WitherEntity.java
++++ b/net/minecraft/entity/boss/WitherEntity.java
+@@ -213,7 +_,7 @@
+       if (this.getInvulnerableTicks() > 0) {
+          int j1 = this.getInvulnerableTicks() - 1;
+          if (j1 <= 0) {
+-            Explosion.Mode explosion$mode = this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING) ? Explosion.Mode.DESTROY : Explosion.Mode.NONE;
++            Explosion.Mode explosion$mode = net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.level, this) ? Explosion.Mode.DESTROY : Explosion.Mode.NONE;
+             this.level.explode(this, this.getX(), this.getEyeY(), this.getZ(), 7.0F, false, explosion$mode);
+             if (!this.isSilent()) {
+                this.level.globalLevelEvent(1023, this.blockPosition(), 0);
+@@ -290,7 +_,7 @@
+ 
+          if (this.destroyBlocksTick > 0) {
+             --this.destroyBlocksTick;
+-            if (this.destroyBlocksTick == 0 && this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
++            if (this.destroyBlocksTick == 0 && net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.level, this)) {
+                int i1 = MathHelper.floor(this.getY());
+                int l1 = MathHelper.floor(this.getX());
+                int i2 = MathHelper.floor(this.getZ());
+@@ -304,7 +_,7 @@
+                         int l = i2 + l2;
+                         BlockPos blockpos = new BlockPos(i3, k, l);
+                         BlockState blockstate = this.level.getBlockState(blockpos);
+-                        if (canDestroy(blockstate)) {
++                        if (blockstate.canEntityDestroy(this.level, blockpos, this) && net.minecraftforge.event.ForgeEventFactory.onEntityDestroyBlock(this, blockpos, blockstate)) {
+                            flag = this.level.destroyBlock(blockpos, true, this) || flag;
+                         }
+                      }
+@@ -325,6 +_,7 @@
+       }
+    }
+ 
++   @Deprecated //Forge: DO NOT USE use BlockState.canEntityDestroy
+    public static boolean canDestroy(BlockState p_181033_0_) {
+       return !p_181033_0_.isAir() && !BlockTags.WITHER_IMMUNE.contains(p_181033_0_.getBlock());
+    }

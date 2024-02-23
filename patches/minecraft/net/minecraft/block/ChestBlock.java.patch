@@ -1,0 +1,12 @@
+--- a/net/minecraft/block/ChestBlock.java
++++ b/net/minecraft/block/ChestBlock.java
+@@ -325,7 +_,8 @@
+    }
+ 
+    public BlockState mirror(BlockState p_185471_1_, Mirror p_185471_2_) {
+-      return p_185471_1_.rotate(p_185471_2_.getRotation(p_185471_1_.getValue(FACING)));
++      BlockState rotated = p_185471_1_.rotate(p_185471_2_.getRotation(p_185471_1_.getValue(FACING)));
++      return p_185471_2_ == Mirror.NONE ? rotated : rotated.setValue(TYPE, rotated.getValue(TYPE).getOpposite());  // Forge: Fixed MC-134110 Structure mirroring breaking apart double chests
+    }
+ 
+    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {

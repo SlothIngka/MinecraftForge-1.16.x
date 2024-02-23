@@ -1,0 +1,66 @@
+--- a/net/minecraft/entity/passive/MooshroomEntity.java
++++ b/net/minecraft/entity/passive/MooshroomEntity.java
+@@ -41,7 +_,7 @@
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ import org.apache.commons.lang3.tuple.Pair;
+ 
+-public class MooshroomEntity extends CowEntity implements IShearable {
++public class MooshroomEntity extends CowEntity implements IShearable, net.minecraftforge.common.IForgeShearable {
+    private static final DataParameter<String> DATA_TYPE = EntityDataManager.defineId(MooshroomEntity.class, DataSerializers.STRING);
+    private Effect effect;
+    private int effectDuration;
+@@ -100,7 +_,7 @@
+ 
+          this.playSound(soundevent, 1.0F, 1.0F);
+          return ActionResultType.sidedSuccess(this.level.isClientSide);
+-      } else if (itemstack.getItem() == Items.SHEARS && this.readyForShearing()) {
++      } else if (false && itemstack.getItem() == Items.SHEARS && this.readyForShearing()) { //Forge: Moved to onSheared
+          this.shear(SoundCategory.PLAYERS);
+          if (!this.level.isClientSide) {
+             itemstack.hurtAndBreak(1, p_230254_1_, (p_213442_1_) -> {
+@@ -234,6 +_,45 @@
+ 
+       return mooshroomentity$type2;
+    }
++
++   @Override
++   public boolean isShearable(@javax.annotation.Nonnull ItemStack item, World world, BlockPos pos) {
++      return readyForShearing();
++   }
++
++   @javax.annotation.Nonnull
++   @Override
++   public java.util.List<ItemStack> onSheared(@javax.annotation.Nullable PlayerEntity player, @javax.annotation.Nonnull ItemStack item, World world, BlockPos pos, int fortune) {
++      world.playSound(null, this, SoundEvents.MOOSHROOM_SHEAR, player == null ? SoundCategory.BLOCKS : SoundCategory.PLAYERS, 1.0F, 1.0F);
++      if (!world.isClientSide()) {
++         ((ServerWorld)this.level).sendParticles(ParticleTypes.EXPLOSION, this.getX(), this.getY(0.5D), this.getZ(), 1, 0.0D, 0.0D, 0.0D, 0.0D);
++         this.remove();
++         CowEntity cowentity = EntityType.COW.create(this.level);
++         cowentity.moveTo(this.getX(), this.getY(), this.getZ(), this.yRot, this.xRot);
++         cowentity.setHealth(this.getHealth());
++         cowentity.yBodyRot = this.yBodyRot;
++         if (this.hasCustomName()) {
++            cowentity.setCustomName(this.getCustomName());
++            cowentity.setCustomNameVisible(this.isCustomNameVisible());
++         }
++
++         if (this.isPersistenceRequired()) {
++            cowentity.setPersistenceRequired();
++         }
++
++         cowentity.setInvulnerable(this.isInvulnerable());
++         this.level.addFreshEntity(cowentity);
++
++         java.util.List<ItemStack> items = new java.util.ArrayList<>();
++         for (int i = 0; i < 5; ++i) {
++            items.add(new ItemStack(this.getMushroomType().blockState.getBlock()));
++         }
++
++         return items;
++      }
++      return java.util.Collections.emptyList();
++   }
++
+ 
+    public static enum Type {
+       RED("red", Blocks.RED_MUSHROOM.defaultBlockState()),

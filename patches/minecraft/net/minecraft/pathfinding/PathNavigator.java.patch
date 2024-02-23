@@ -1,0 +1,16 @@
+--- a/net/minecraft/pathfinding/PathNavigator.java
++++ b/net/minecraft/pathfinding/PathNavigator.java
+@@ -208,10 +_,10 @@
+       Vector3d vector3d = this.getTempMobPos();
+       this.maxDistanceToWaypoint = this.mob.getBbWidth() > 0.75F ? this.mob.getBbWidth() / 2.0F : 0.75F - this.mob.getBbWidth() / 2.0F;
+       Vector3i vector3i = this.path.getNextNodePos();
+-      double d0 = Math.abs(this.mob.getX() - ((double)vector3i.getX() + 0.5D));
++      double d0 = Math.abs(this.mob.getX() - ((double)vector3i.getX() + (this.mob.getBbWidth() + 1) / 2D)); //Forge: Fix MC-94054
+       double d1 = Math.abs(this.mob.getY() - (double)vector3i.getY());
+-      double d2 = Math.abs(this.mob.getZ() - ((double)vector3i.getZ() + 0.5D));
+-      boolean flag = d0 < (double)this.maxDistanceToWaypoint && d2 < (double)this.maxDistanceToWaypoint && d1 < 1.0D;
++      double d2 = Math.abs(this.mob.getZ() - ((double)vector3i.getZ() + (this.mob.getBbWidth() + 1) / 2D)); //Forge: Fix MC-94054
++      boolean flag = d0 <= (double)this.maxDistanceToWaypoint && d2 <= (double)this.maxDistanceToWaypoint && d1 < 1.0D; //Forge: Fix MC-94054
+       if (flag || this.mob.canCutCorner(this.path.getNextNode().type) && this.shouldTargetNextNodeInDirection(vector3d)) {
+          this.path.advance();
+       }

@@ -1,0 +1,171 @@
+--- a/net/minecraft/block/Block.java
++++ b/net/minecraft/block/Block.java
+@@ -54,9 +_,10 @@
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+ 
+-public class Block extends AbstractBlock implements IItemProvider {
++public class Block extends AbstractBlock implements IItemProvider, net.minecraftforge.common.extensions.IForgeBlock {
+    protected static final Logger LOGGER = LogManager.getLogger();
+-   public static final ObjectIntIdentityMap<BlockState> BLOCK_STATE_REGISTRY = new ObjectIntIdentityMap<>();
++   @Deprecated //Forge: Do not use, use GameRegistry
++   public static final ObjectIntIdentityMap<BlockState> BLOCK_STATE_REGISTRY = net.minecraftforge.registries.GameData.getBlockStateIDMap();
+    private static final LoadingCache<VoxelShape, Boolean> SHAPE_FULL_BLOCK_CACHE = CacheBuilder.newBuilder().maximumSize(512L).weakKeys().build(new CacheLoader<VoxelShape, Boolean>() {
+       public Boolean load(VoxelShape p_load_1_) {
+          return !VoxelShapes.joinIsNotEmpty(VoxelShapes.block(), p_load_1_, IBooleanFunction.NOT_SAME);
+@@ -151,6 +_,8 @@
+       super(p_i48440_1_);
+       StateContainer.Builder<Block, BlockState> builder = new StateContainer.Builder<>(this);
+       this.createBlockStateDefinition(builder);
++      this.harvestLevel = p_i48440_1_.getHarvestLevel();
++      this.harvestTool = p_i48440_1_.getHarvestTool();
+       this.stateDefinition = builder.create(Block::defaultBlockState, BlockState::new);
+       this.registerDefaultState(this.stateDefinition.any());
+    }
+@@ -261,7 +_,7 @@
+    }
+ 
+    public static void popResource(World p_180635_0_, BlockPos p_180635_1_, ItemStack p_180635_2_) {
+-      if (!p_180635_0_.isClientSide && !p_180635_2_.isEmpty() && p_180635_0_.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS)) {
++      if (!p_180635_0_.isClientSide && !p_180635_2_.isEmpty() && p_180635_0_.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS) && !p_180635_0_.restoringBlockSnapshots) {
+          float f = 0.5F;
+          double d0 = (double)(p_180635_0_.random.nextFloat() * 0.5F) + 0.25D;
+          double d1 = (double)(p_180635_0_.random.nextFloat() * 0.5F) + 0.25D;
+@@ -273,7 +_,7 @@
+    }
+ 
+    public void popExperience(ServerWorld p_180637_1_, BlockPos p_180637_2_, int p_180637_3_) {
+-      if (p_180637_1_.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS)) {
++      if (p_180637_1_.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS) && !p_180637_1_.restoringBlockSnapshots) {
+          while(p_180637_3_ > 0) {
+             int i = ExperienceOrbEntity.getExperienceValue(p_180637_3_);
+             p_180637_3_ -= i;
+@@ -283,6 +_,7 @@
+ 
+    }
+ 
++   @Deprecated //Forge: Use more sensitive version
+    public float getExplosionResistance() {
+       return this.explosionResistance;
+    }
+@@ -332,6 +_,7 @@
+       p_176216_2_.setDeltaMovement(p_176216_2_.getDeltaMovement().multiply(1.0D, 0.0D, 1.0D));
+    }
+ 
++   @Deprecated //Forge: Use more sensitive version
+    public ItemStack getCloneItemStack(IBlockReader p_185473_1_, BlockPos p_185473_2_, BlockState p_185473_3_) {
+       return new ItemStack(this);
+    }
+@@ -363,6 +_,7 @@
+    public void handleRain(World p_176224_1_, BlockPos p_176224_2_) {
+    }
+ 
++   @Deprecated //Forge: Use more sensitive version
+    public boolean dropFromExplosion(Explosion p_149659_1_) {
+       return true;
+    }
+@@ -382,6 +_,7 @@
+       return this.defaultBlockState;
+    }
+ 
++   @Deprecated //Forge: Use more sensitive version {@link IForgeBlockState#getSoundType(IWorldReader, BlockPos, Entity) }
+    public SoundType getSoundType(BlockState p_220072_1_) {
+       return this.soundType;
+    }
+@@ -391,7 +_,7 @@
+          this.item = Item.byBlock(this);
+       }
+ 
+-      return this.item;
++      return this.item.delegate.get(); //Forge: Vanilla caches the items, update with registry replacements.
+    }
+ 
+    public boolean hasDynamicShape() {
+@@ -399,7 +_,7 @@
+    }
+ 
+    public String toString() {
+-      return "Block{" + Registry.BLOCK.getKey(this) + "}";
++      return "Block{" + getRegistryName() + "}";
+    }
+ 
+    @OnlyIn(Dist.CLIENT)
+@@ -409,6 +_,78 @@
+    protected Block asBlock() {
+       return this;
+    }
++
++   /* ======================================== FORGE START =====================================*/
++   protected Random RANDOM = new Random();
++   private net.minecraftforge.common.ToolType harvestTool;
++   private int harvestLevel;
++   private final net.minecraftforge.common.util.ReverseTagWrapper<Block> reverseTags = new net.minecraftforge.common.util.ReverseTagWrapper<>(this, BlockTags::getAllTags);
++
++   @Nullable
++   @Override
++   public net.minecraftforge.common.ToolType getHarvestTool(BlockState state) {
++      return harvestTool; //TODO: RE-Evaluate
++   }
++
++   @Override
++   public int getHarvestLevel(BlockState state) {
++     return harvestLevel; //TODO: RE-Evaluate
++   }
++
++   @Override
++   public boolean canSustainPlant(BlockState state, IBlockReader world, BlockPos pos, Direction facing, net.minecraftforge.common.IPlantable plantable) {
++      BlockState plant = plantable.getPlant(world, pos.relative(facing));
++      net.minecraftforge.common.PlantType type = plantable.getPlantType(world, pos.relative(facing));
++
++      if (plant.getBlock() == Blocks.CACTUS)
++         return state.is(Blocks.CACTUS) || state.is(Blocks.SAND) || state.is(Blocks.RED_SAND);
++
++      if (plant.getBlock() == Blocks.SUGAR_CANE && this == Blocks.SUGAR_CANE)
++         return true;
++
++      if (plantable instanceof BushBlock && ((BushBlock)plantable).mayPlaceOn(state, world, pos))
++         return true;
++
++      if (net.minecraftforge.common.PlantType.DESERT.equals(type)) {
++         return this.getBlock() == Blocks.SAND || this.getBlock() == Blocks.TERRACOTTA || this.getBlock() instanceof GlazedTerracottaBlock;
++      } else if (net.minecraftforge.common.PlantType.NETHER.equals(type)) {
++         return this.getBlock() == Blocks.SOUL_SAND;
++      } else if (net.minecraftforge.common.PlantType.CROP.equals(type)) {
++         return state.is(Blocks.FARMLAND);
++      } else if (net.minecraftforge.common.PlantType.CAVE.equals(type)) {
++         return state.isFaceSturdy(world, pos, Direction.UP);
++      } else if (net.minecraftforge.common.PlantType.PLAINS.equals(type)) {
++         return this.getBlock() == Blocks.GRASS_BLOCK || net.minecraftforge.common.Tags.Blocks.DIRT.contains(this) || this.getBlock() == Blocks.FARMLAND;
++      } else if (net.minecraftforge.common.PlantType.WATER.equals(type)) {
++         return state.getMaterial() == net.minecraft.block.material.Material.WATER; //&& state.getValue(BlockLiquidWrapper)
++      } else if (net.minecraftforge.common.PlantType.BEACH.equals(type)) {
++         boolean isBeach = state.is(Blocks.GRASS_BLOCK) || net.minecraftforge.common.Tags.Blocks.DIRT.contains(this) || state.is(Blocks.SAND) || state.is(Blocks.RED_SAND);
++         boolean hasWater = false;
++         for (Direction face : Direction.Plane.HORIZONTAL) {
++             BlockState blockState = world.getBlockState(pos.relative(face));
++             net.minecraft.fluid.FluidState fluidState = world.getFluidState(pos.relative(face));
++             hasWater |= blockState.is(Blocks.FROSTED_ICE);
++             hasWater |= fluidState.is(net.minecraft.tags.FluidTags.WATER);
++             if (hasWater)
++                break; //No point continuing.
++         }
++         return isBeach && hasWater;
++      }
++      return false;
++  }
++
++  @Override
++  public final java.util.Set<net.minecraft.util.ResourceLocation> getTags() {
++     return reverseTags.getTagNames();
++  }
++
++  static {
++      net.minecraftforge.common.ForgeHooks.setBlockToolSetter((block, tool, level) -> {
++            block.harvestTool = tool;
++            block.harvestLevel = level;
++      });
++  }
++   /* ========================================= FORGE END ======================================*/
+ 
+    public static final class RenderSideCacheKey {
+       private final BlockState first;

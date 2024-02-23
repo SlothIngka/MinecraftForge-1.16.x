@@ -1,0 +1,11 @@
+--- a/net/minecraft/block/PortalSize.java
++++ b/net/minecraft/block/PortalSize.java
+@@ -16,7 +_,7 @@
+ 
+ public class PortalSize {
+    private static final AbstractBlock.IPositionPredicate FRAME = (p_242966_0_, p_242966_1_, p_242966_2_) -> {
+-      return p_242966_0_.is(Blocks.OBSIDIAN);
++      return p_242966_0_.isPortalFrame(p_242966_1_, p_242966_2_);
+    };
+    private final IWorld level;
+    private final Direction.Axis axis;

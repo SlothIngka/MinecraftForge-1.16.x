@@ -1,0 +1,10 @@
+--- a/net/minecraft/entity/monster/MagmaCubeEntity.java
++++ b/net/minecraft/entity/monster/MagmaCubeEntity.java
+@@ -72,6 +_,7 @@
+       Vector3d vector3d = this.getDeltaMovement();
+       this.setDeltaMovement(vector3d.x, (double)(this.getJumpPower() + (float)this.getSize() * 0.1F), vector3d.z);
+       this.hasImpulse = true;
++      net.minecraftforge.common.ForgeHooks.onLivingJump(this);
+    }
+ 
+    protected void jumpInLiquid(ITag<Fluid> p_180466_1_) {

@@ -1,0 +1,38 @@
+--- a/net/minecraft/data/DataGenerator.java
++++ b/net/minecraft/data/DataGenerator.java
+@@ -16,10 +_,11 @@
+    private final Collection<Path> inputFolders;
+    private final Path outputFolder;
+    private final List<IDataProvider> providers = Lists.newArrayList();
++   private final List<IDataProvider> providerView = java.util.Collections.unmodifiableList(providers);
+ 
+    public DataGenerator(Path p_i48266_1_, Collection<Path> p_i48266_2_) {
+       this.outputFolder = p_i48266_1_;
+-      this.inputFolders = p_i48266_2_;
++      this.inputFolders = Lists.newArrayList(p_i48266_2_);
+    }
+ 
+    public Collection<Path> getInputFolders() {
+@@ -38,6 +_,7 @@
+ 
+       for(IDataProvider idataprovider : this.providers) {
+          LOGGER.info("Starting provider: {}", (Object)idataprovider.getName());
++         net.minecraftforge.fml.StartupMessageManager.addModMessage("Generating: " + idataprovider.getName());
+          stopwatch1.start();
+          idataprovider.run(directorycache);
+          stopwatch1.stop();
+@@ -51,6 +_,14 @@
+ 
+    public void addProvider(IDataProvider p_200390_1_) {
+       this.providers.add(p_200390_1_);
++   }
++
++   public List<IDataProvider> getProviders() {
++       return this.providerView;
++   }
++
++   public void addInput(Path value) {
++      this.inputFolders.add(value);
+    }
+ 
+    static {

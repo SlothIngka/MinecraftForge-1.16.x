@@ -1,0 +1,50 @@
+--- a/net/minecraft/resources/ResourcePackInfo.java
++++ b/net/minecraft/resources/ResourcePackInfo.java
+@@ -30,6 +_,7 @@
+    private final ResourcePackInfo.Priority defaultPosition;
+    private final boolean required;
+    private final boolean fixedPosition;
++   private final boolean hidden; // Forge: Allow packs to be hidden from the UI entirely
+    private final IPackNameDecorator packSource;
+ 
+    @Nullable
+@@ -53,7 +_,12 @@
+       return null;
+    }
+ 
++   @Deprecated
+    public ResourcePackInfo(String p_i231422_1_, boolean p_i231422_2_, Supplier<IResourcePack> p_i231422_3_, ITextComponent p_i231422_4_, ITextComponent p_i231422_5_, PackCompatibility p_i231422_6_, ResourcePackInfo.Priority p_i231422_7_, boolean p_i231422_8_, IPackNameDecorator p_i231422_9_) {
++       this(p_i231422_1_, p_i231422_2_, p_i231422_3_, p_i231422_4_, p_i231422_5_, p_i231422_6_, p_i231422_7_, p_i231422_8_, p_i231422_9_, false);
++   }
++
++   public ResourcePackInfo(String p_i231422_1_, boolean p_i231422_2_, Supplier<IResourcePack> p_i231422_3_, ITextComponent p_i231422_4_, ITextComponent p_i231422_5_, PackCompatibility p_i231422_6_, ResourcePackInfo.Priority p_i231422_7_, boolean p_i231422_8_, IPackNameDecorator p_i231422_9_, boolean hidden) {
+       this.id = p_i231422_1_;
+       this.supplier = p_i231422_3_;
+       this.title = p_i231422_4_;
+@@ -63,10 +_,16 @@
+       this.defaultPosition = p_i231422_7_;
+       this.fixedPosition = p_i231422_8_;
+       this.packSource = p_i231422_9_;
++      this.hidden = hidden;
+    }
+ 
++   @Deprecated
+    public ResourcePackInfo(String p_i231421_1_, boolean p_i231421_2_, Supplier<IResourcePack> p_i231421_3_, IResourcePack p_i231421_4_, PackMetadataSection p_i231421_5_, ResourcePackInfo.Priority p_i231421_6_, IPackNameDecorator p_i231421_7_) {
+-      this(p_i231421_1_, p_i231421_2_, p_i231421_3_, new StringTextComponent(p_i231421_4_.getName()), p_i231421_5_.getDescription(), PackCompatibility.forFormat(p_i231421_5_.getPackFormat()), p_i231421_6_, false, p_i231421_7_);
++       this(p_i231421_1_, p_i231421_2_, p_i231421_3_, p_i231421_4_, p_i231421_5_, p_i231421_6_, p_i231421_7_, false);
++   }
++
++   public ResourcePackInfo(String p_i231421_1_, boolean p_i231421_2_, Supplier<IResourcePack> p_i231421_3_, IResourcePack p_i231421_4_, PackMetadataSection p_i231421_5_, ResourcePackInfo.Priority p_i231421_6_, IPackNameDecorator p_i231421_7_, boolean hidden) {
++      this(p_i231421_1_, p_i231421_2_, p_i231421_3_, new StringTextComponent(p_i231421_4_.getName()), p_i231421_5_.getDescription(), PackCompatibility.forFormat(p_i231421_5_.getPackFormat()), p_i231421_6_, false, p_i231421_7_, hidden);
+    }
+ 
+    @OnlyIn(Dist.CLIENT)
+@@ -113,6 +_,8 @@
+    public IPackNameDecorator getPackSource() {
+       return this.packSource;
+    }
++   
++   public boolean isHidden() { return hidden; }
+ 
+    public boolean equals(Object p_equals_1_) {
+       if (this == p_equals_1_) {

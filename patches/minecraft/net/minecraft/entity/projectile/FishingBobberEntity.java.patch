@@ -1,0 +1,74 @@
+--- a/net/minecraft/entity/projectile/FishingBobberEntity.java
++++ b/net/minecraft/entity/projectile/FishingBobberEntity.java
+@@ -245,7 +_,7 @@
+ 
+    private void checkCollision() {
+       RayTraceResult raytraceresult = ProjectileHelper.getHitResult(this, this::canHitEntity);
+-      this.onHit(raytraceresult);
++      if (raytraceresult.getType() == RayTraceResult.Type.MISS || !net.minecraftforge.event.ForgeEventFactory.onProjectileImpact(this, raytraceresult)) this.onHit(raytraceresult);
+    }
+ 
+    protected boolean canHitEntity(Entity p_230298_1_) {
+@@ -300,7 +_,7 @@
+             double d1 = (double)((float)MathHelper.floor(this.getY()) + 1.0F);
+             double d2 = this.getZ() + (double)(f2 * (float)this.timeUntilHooked * 0.1F);
+             BlockState blockstate = serverworld.getBlockState(new BlockPos(d0, d1 - 1.0D, d2));
+-            if (blockstate.is(Blocks.WATER)) {
++            if (serverworld.getBlockState(new BlockPos((int)d0, (int)d1 - 1, (int)d2)).getMaterial() == net.minecraft.block.material.Material.WATER) {
+                if (this.random.nextFloat() < 0.15F) {
+                   serverworld.sendParticles(ParticleTypes.BUBBLE, d0, d1 - (double)0.1F, d2, 1, (double)f1, 0.1D, (double)f2, 0.0D);
+                }
+@@ -336,7 +_,7 @@
+             double d5 = (double)((float)MathHelper.floor(this.getY()) + 1.0F);
+             double d6 = this.getZ() + (double)(MathHelper.cos(f6) * f7 * 0.1F);
+             BlockState blockstate1 = serverworld.getBlockState(new BlockPos(d4, d5 - 1.0D, d6));
+-            if (blockstate1.is(Blocks.WATER)) {
++            if (serverworld.getBlockState(new BlockPos(d4, d5 - 1.0D, d6)).getMaterial() == net.minecraft.block.material.Material.WATER) {
+                serverworld.sendParticles(ParticleTypes.SPLASH, d4, d5, d6, 2 + this.random.nextInt(2), (double)0.1F, 0.0D, (double)0.1F, 0.0D);
+             }
+          }
+@@ -407,6 +_,7 @@
+       PlayerEntity playerentity = this.getPlayerOwner();
+       if (!this.level.isClientSide && playerentity != null) {
+          int i = 0;
++         net.minecraftforge.event.entity.player.ItemFishedEvent event = null;
+          if (this.hookedIn != null) {
+             this.bringInHookedEntity();
+             CriteriaTriggers.FISHING_ROD_HOOKED.trigger((ServerPlayerEntity)playerentity, p_146034_1_, this, Collections.emptyList());
+@@ -414,8 +_,15 @@
+             i = this.hookedIn instanceof ItemEntity ? 3 : 5;
+          } else if (this.nibble > 0) {
+             LootContext.Builder lootcontext$builder = (new LootContext.Builder((ServerWorld)this.level)).withParameter(LootParameters.ORIGIN, this.position()).withParameter(LootParameters.TOOL, p_146034_1_).withParameter(LootParameters.THIS_ENTITY, this).withRandom(this.random).withLuck((float)this.luck + playerentity.getLuck());
++            lootcontext$builder.withParameter(LootParameters.KILLER_ENTITY, this.getOwner()).withParameter(LootParameters.THIS_ENTITY, this);
+             LootTable loottable = this.level.getServer().getLootTables().get(LootTables.FISHING);
+             List<ItemStack> list = loottable.getRandomItems(lootcontext$builder.create(LootParameterSets.FISHING));
++            event = new net.minecraftforge.event.entity.player.ItemFishedEvent(list, this.onGround ? 2 : 1, this);
++            net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(event);
++            if (event.isCanceled()) {
++               this.remove();
++               return event.getRodDamage();
++            }
+             CriteriaTriggers.FISHING_ROD_HOOKED.trigger((ServerPlayerEntity)playerentity, p_146034_1_, this, list);
+ 
+             for(ItemStack itemstack : list) {
+@@ -440,7 +_,7 @@
+          }
+ 
+          this.remove();
+-         return i;
++         return event == null ? i : event.getRodDamage();
+       } else {
+          return 0;
+       }
+@@ -467,8 +_,9 @@
+       return false;
+    }
+ 
+-   public void remove() {
+-      super.remove();
++   @Override
++   public void remove(boolean keepData) {
++      super.remove(keepData);
+       PlayerEntity playerentity = this.getPlayerOwner();
+       if (playerentity != null) {
+          playerentity.fishing = null;

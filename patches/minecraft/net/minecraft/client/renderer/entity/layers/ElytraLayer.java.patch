@@ -1,0 +1,55 @@
+--- a/net/minecraft/client/renderer/entity/layers/ElytraLayer.java
++++ b/net/minecraft/client/renderer/entity/layers/ElytraLayer.java
+@@ -30,7 +_,7 @@
+ 
+    public void render(MatrixStack p_225628_1_, IRenderTypeBuffer p_225628_2_, int p_225628_3_, T p_225628_4_, float p_225628_5_, float p_225628_6_, float p_225628_7_, float p_225628_8_, float p_225628_9_, float p_225628_10_) {
+       ItemStack itemstack = p_225628_4_.getItemBySlot(EquipmentSlotType.CHEST);
+-      if (itemstack.getItem() == Items.ELYTRA) {
++      if (shouldRender(itemstack, p_225628_4_)) {
+          ResourceLocation resourcelocation;
+          if (p_225628_4_ instanceof AbstractClientPlayerEntity) {
+             AbstractClientPlayerEntity abstractclientplayerentity = (AbstractClientPlayerEntity)p_225628_4_;
+@@ -39,10 +_,10 @@
+             } else if (abstractclientplayerentity.isCapeLoaded() && abstractclientplayerentity.getCloakTextureLocation() != null && abstractclientplayerentity.isModelPartShown(PlayerModelPart.CAPE)) {
+                resourcelocation = abstractclientplayerentity.getCloakTextureLocation();
+             } else {
+-               resourcelocation = WINGS_LOCATION;
++               resourcelocation = getElytraTexture(itemstack, p_225628_4_);
+             }
+          } else {
+-            resourcelocation = WINGS_LOCATION;
++            resourcelocation = getElytraTexture(itemstack, p_225628_4_);
+          }
+ 
+          p_225628_1_.pushPose();
+@@ -53,5 +_,30 @@
+          this.elytraModel.renderToBuffer(p_225628_1_, ivertexbuilder, p_225628_3_, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+          p_225628_1_.popPose();
+       }
++   }
++
++   /**
++    * Determines if the ElytraLayer should render.
++    * ItemStack and Entity are provided for modder convenience,
++    * For example, using the same ElytraLayer for multiple custom Elytra.
++    *
++    * @param stack  The Elytra ItemStack
++    * @param entity The entity being rendered.
++    * @return If the ElytraLayer should render.
++    */
++   public boolean shouldRender(ItemStack stack, T entity) {
++      return stack.getItem() == Items.ELYTRA;
++   }
++
++   /**
++    * Gets the texture to use with this ElytraLayer.
++    * This assumes the vanilla Elytra model.
++    *
++    * @param stack  The Elytra ItemStack.
++    * @param entity The entity being rendered.
++    * @return The texture.
++    */
++   public ResourceLocation getElytraTexture(ItemStack stack, T entity) {
++      return WINGS_LOCATION;
+    }
+ }

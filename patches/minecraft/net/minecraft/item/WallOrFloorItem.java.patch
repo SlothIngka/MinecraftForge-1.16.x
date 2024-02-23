@@ -1,0 +1,12 @@
+--- a/net/minecraft/item/WallOrFloorItem.java
++++ b/net/minecraft/item/WallOrFloorItem.java
+@@ -41,4 +_,9 @@
+       super.registerBlocks(p_195946_1_, p_195946_2_);
+       p_195946_1_.put(this.wallBlock, p_195946_2_);
+    }
++
++   public void removeFromBlockToItemMap(Map<Block, Item> blockToItemMap, Item itemIn) {
++      super.removeFromBlockToItemMap(blockToItemMap, itemIn);
++      blockToItemMap.remove(this.wallBlock);
++   }
+ }

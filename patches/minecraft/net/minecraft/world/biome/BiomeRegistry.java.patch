@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/biome/BiomeRegistry.java
++++ b/net/minecraft/world/biome/BiomeRegistry.java
+@@ -17,7 +_,7 @@
+    }
+ 
+    public static RegistryKey<Biome> byId(int p_244203_0_) {
+-      return TO_NAME.get(p_244203_0_);
++      return ((net.minecraftforge.registries.ForgeRegistry<Biome>)net.minecraftforge.registries.ForgeRegistries.BIOMES).getKey(p_244203_0_);
+    }
+ 
+    static {

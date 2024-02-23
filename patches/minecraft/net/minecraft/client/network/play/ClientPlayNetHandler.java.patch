@@ -1,0 +1,117 @@
+--- a/net/minecraft/client/network/play/ClientPlayNetHandler.java
++++ b/net/minecraft/client/network/play/ClientPlayNetHandler.java
+@@ -384,6 +_,7 @@
+ 
+       this.minecraft.debugRenderer.clear();
+       this.minecraft.player.resetPos();
++      net.minecraftforge.fml.client.ClientHooks.firePlayerLogin(this.minecraft.gameMode, this.minecraft.player, this.minecraft.getConnection().getConnection());
+       int i = p_147282_1_.getPlayerId();
+       this.level.addPlayer(i, this.minecraft.player);
+       this.minecraft.player.input = new MovementInputFromOptions(this.minecraft.options);
+@@ -395,6 +_,7 @@
+       this.minecraft.player.setShowDeathScreen(p_147282_1_.shouldShowDeathScreen());
+       this.minecraft.gameMode.setLocalMode(p_147282_1_.getGameType());
+       this.minecraft.gameMode.setPreviousLocalMode(p_147282_1_.getPreviousGameType());
++      net.minecraftforge.fml.network.NetworkHooks.sendMCRegistryPackets(connection, "PLAY_TO_SERVER");
+       this.minecraft.options.broadcastOptions();
+       this.connection.send(new CCustomPayloadPacket(CCustomPayloadPacket.BRAND, (new PacketBuffer(Unpooled.buffer())).writeUtf(ClientBrandRetriever.getClientModName())));
+       this.minecraft.getGame().onStartGameSession();
+@@ -734,7 +_,7 @@
+          BlockPos blockpos = new BlockPos(compoundnbt.getInt("x"), compoundnbt.getInt("y"), compoundnbt.getInt("z"));
+          TileEntity tileentity = this.level.getBlockEntity(blockpos);
+          if (tileentity != null) {
+-            tileentity.load(this.level.getBlockState(blockpos), compoundnbt);
++            tileentity.handleUpdateTag(this.level.getBlockState(blockpos), compoundnbt);
+          }
+       }
+ 
+@@ -815,7 +_,9 @@
+ 
+    public void handleChat(SChatPacket p_147251_1_) {
+       PacketThreadUtil.ensureRunningOnSameThread(p_147251_1_, this, this.minecraft);
+-      this.minecraft.gui.handleChat(p_147251_1_.getType(), p_147251_1_.getMessage(), p_147251_1_.getSender());
++      net.minecraft.util.text.ITextComponent message = net.minecraftforge.event.ForgeEventFactory.onClientChat(p_147251_1_.getType(), p_147251_1_.getMessage(), p_147251_1_.getSender());
++      if (message == null) return;
++      this.minecraft.gui.handleChat(p_147251_1_.getType(), message, p_147251_1_.getSender());
+    }
+ 
+    public void handleAnimate(SAnimateHandPacket p_147279_1_) {
+@@ -854,6 +_,7 @@
+          livingentity.setPacketCoordinates(d0, d1, d2);
+          livingentity.yBodyRot = (float)(p_147281_1_.getyHeadRot() * 360) / 256.0F;
+          livingentity.yHeadRot = (float)(p_147281_1_.getyHeadRot() * 360) / 256.0F;
++         if (false) // Forge: Fix MC-158205: Moved into setId()
+          if (livingentity instanceof EnderDragonEntity) {
+             EnderDragonPartEntity[] aenderdragonpartentity = ((EnderDragonEntity)livingentity).getSubEntities();
+ 
+@@ -1004,8 +_,10 @@
+          clientplayerentity1.getAttributes().assignValues(clientplayerentity.getAttributes());
+       }
+ 
++      clientplayerentity1.updateSyncFields(clientplayerentity); // Forge: fix MC-10657
+       clientplayerentity1.resetPos();
+       clientplayerentity1.setServerBrand(s);
++      net.minecraftforge.fml.client.ClientHooks.firePlayerRespawn(this.minecraft.gameMode, clientplayerentity, clientplayerentity1, clientplayerentity1.connection.getConnection());
+       this.level.addPlayer(i, clientplayerentity1);
+       clientplayerentity1.yRot = -180.0F;
+       clientplayerentity1.input = new MovementInputFromOptions(this.minecraft.options);
+@@ -1131,6 +_,12 @@
+ 
+       if (flag && this.minecraft.screen instanceof CommandBlockScreen) {
+          ((CommandBlockScreen)this.minecraft.screen).updateGui();
++      } else {
++         if(tileentity == null) {
++            LOGGER.error("Received invalid update packet for null tile entity at {} with data: {}", p_147273_1_.getPos(), p_147273_1_.getTag());
++            return;
++         }
++         tileentity.onDataPacket(connection, p_147273_1_);
+       }
+ 
+    }
+@@ -1299,6 +_,7 @@
+       clientrecipebook.setupCollections(this.recipeManager.getRecipes());
+       clientrecipebook.getCollections().forEach(imutablesearchtree::add);
+       imutablesearchtree.refresh();
++      net.minecraftforge.client.ForgeHooksClient.onRecipesUpdated(this.recipeManager);
+    }
+ 
+    public void handleLookAt(SPlayerLookPacket p_200232_1_) {
+@@ -1376,7 +_,7 @@
+       PacketThreadUtil.ensureRunningOnSameThread(p_147260_1_, this, this.minecraft);
+       Entity entity = this.level.getEntity(p_147260_1_.getEntityId());
+       if (entity instanceof LivingEntity) {
+-         Effect effect = Effect.byId(p_147260_1_.getEffectId());
++         Effect effect = Effect.byId(p_147260_1_.getEffectId() & 0xFF);
+          if (effect != null) {
+             EffectInstance effectinstance = new EffectInstance(effect, p_147260_1_.getEffectDurationTicks(), p_147260_1_.getEffectAmplifier(), p_147260_1_.isEffectAmbient(), p_147260_1_.isEffectVisible(), p_147260_1_.effectShowsIcon());
+             effectinstance.setNoCounter(p_147260_1_.isSuperLongDuration());
+@@ -1388,11 +_,14 @@
+    public void handleUpdateTags(STagsListPacket p_199723_1_) {
+       PacketThreadUtil.ensureRunningOnSameThread(p_199723_1_, this, this.minecraft);
+       ITagCollectionSupplier itagcollectionsupplier = p_199723_1_.getTags();
+-      Multimap<ResourceLocation, ResourceLocation> multimap = TagRegistryManager.getAllMissingTags(itagcollectionsupplier);
++      boolean vanillaConnection = net.minecraftforge.fml.network.NetworkHooks.isVanillaConnection(connection);
++      Multimap<ResourceLocation, ResourceLocation> multimap = vanillaConnection ? TagRegistryManager.getAllMissingTags(net.minecraftforge.common.ForgeTagHandler.withNoCustom(itagcollectionsupplier)) : TagRegistryManager.validateVanillaTags(itagcollectionsupplier);//Forge: If we are connecting to vanilla validate all tags to properly validate custom tags the client may "require", and if we are connecting to forge only validate the vanilla tag types as the custom tag types get synced in a separate packet so may still arrive
+       if (!multimap.isEmpty()) {
+          LOGGER.warn("Incomplete server tags, disconnecting. Missing: {}", (Object)multimap);
+          this.connection.disconnect(new TranslationTextComponent("multiplayer.disconnect.missing_tags"));
+       } else {
++         net.minecraftforge.common.ForgeTagHandler.resetCachedTagCollections(true, vanillaConnection);
++         itagcollectionsupplier = ITagCollectionSupplier.reinjectOptionalTags(itagcollectionsupplier);
+          this.tags = itagcollectionsupplier;
+          if (!this.connection.isMemoryConnection()) {
+             itagcollectionsupplier.bindToGlobal();
+@@ -1885,10 +_,12 @@
+             int l5 = packetbuffer.readInt();
+             this.minecraft.debugRenderer.gameTestDebugRenderer.addMarker(blockpos8, l3, s10, l5);
+          } else {
+-            LOGGER.warn("Unknown custom packed identifier: {}", (Object)resourcelocation);
++            if (!net.minecraftforge.fml.network.NetworkHooks.onCustomPayload(p_147240_1_, this.connection))
++            LOGGER.warn("Unknown custom packet identifier: {}", (Object)resourcelocation);
+          }
+       } finally {
+          if (packetbuffer != null) {
++            if (false) // Forge: let packet handle releasing buffer
+             packetbuffer.release();
+          }
+ 

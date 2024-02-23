@@ -1,0 +1,13 @@
+--- a/net/minecraft/client/renderer/model/SimpleBakedModel.java
++++ b/net/minecraft/client/renderer/model/SimpleBakedModel.java
+@@ -77,6 +_,10 @@
+       private final boolean isGui3d;
+       private final ItemCameraTransforms transforms;
+ 
++      public Builder(net.minecraftforge.client.model.IModelConfiguration model, ItemOverrideList overrides) {
++         this(model.useSmoothLighting(), model.isSideLit(), model.isShadedInGui(), model.getCameraTransforms(), overrides);
++      }
++
+       public Builder(BlockModel p_i230060_1_, ItemOverrideList p_i230060_2_, boolean p_i230060_3_) {
+          this(p_i230060_1_.hasAmbientOcclusion(), p_i230060_1_.getGuiLight().lightLikeBlock(), p_i230060_3_, p_i230060_1_.getTransforms(), p_i230060_2_);
+       }

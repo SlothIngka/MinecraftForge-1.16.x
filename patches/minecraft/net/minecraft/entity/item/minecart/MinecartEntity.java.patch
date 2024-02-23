@@ -1,0 +1,11 @@
+--- a/net/minecraft/entity/item/minecart/MinecartEntity.java
++++ b/net/minecraft/entity/item/minecart/MinecartEntity.java
+@@ -16,6 +_,8 @@
+    }
+ 
+    public ActionResultType interact(PlayerEntity p_184230_1_, Hand p_184230_2_) {
++      ActionResultType ret = super.interact(p_184230_1_, p_184230_2_);
++      if (ret.consumesAction()) return ret;
+       if (p_184230_1_.isSecondaryUseActive()) {
+          return ActionResultType.PASS;
+       } else if (this.isVehicle()) {

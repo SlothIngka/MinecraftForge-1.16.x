@@ -1,0 +1,20 @@
+--- a/net/minecraft/entity/projectile/WitherSkullEntity.java
++++ b/net/minecraft/entity/projectile/WitherSkullEntity.java
+@@ -48,7 +_,7 @@
+    }
+ 
+    public float getBlockExplosionResistance(Explosion p_180428_1_, IBlockReader p_180428_2_, BlockPos p_180428_3_, BlockState p_180428_4_, FluidState p_180428_5_, float p_180428_6_) {
+-      return this.isDangerous() && WitherEntity.canDestroy(p_180428_4_) ? Math.min(0.8F, p_180428_6_) : p_180428_6_;
++      return this.isDangerous() && p_180428_4_.canEntityDestroy(p_180428_2_, p_180428_3_, this) ? Math.min(0.8F, p_180428_6_) : p_180428_6_;
+    }
+ 
+    protected void onHitEntity(EntityRayTraceResult p_213868_1_) {
+@@ -90,7 +_,7 @@
+    protected void onHit(RayTraceResult p_70227_1_) {
+       super.onHit(p_70227_1_);
+       if (!this.level.isClientSide) {
+-         Explosion.Mode explosion$mode = this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING) ? Explosion.Mode.DESTROY : Explosion.Mode.NONE;
++         Explosion.Mode explosion$mode = net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.level, this.getOwner()) ? Explosion.Mode.DESTROY : Explosion.Mode.NONE;
+          this.level.explode(this, this.getX(), this.getY(), this.getZ(), 1.0F, false, explosion$mode);
+          this.remove();
+       }

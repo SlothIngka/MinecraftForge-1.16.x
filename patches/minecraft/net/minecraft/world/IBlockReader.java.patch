@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/IBlockReader.java
++++ b/net/minecraft/world/IBlockReader.java
+@@ -26,7 +_,7 @@
+    FluidState getFluidState(BlockPos p_204610_1_);
+ 
+    default int getLightEmission(BlockPos p_217298_1_) {
+-      return this.getBlockState(p_217298_1_).getLightEmission();
++      return this.getBlockState(p_217298_1_).getLightValue(this, p_217298_1_);
+    }
+ 
+    default int getMaxLightLevel() {

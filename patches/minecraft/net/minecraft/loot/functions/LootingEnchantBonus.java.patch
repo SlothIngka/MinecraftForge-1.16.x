@@ -1,0 +1,11 @@
+--- a/net/minecraft/loot/functions/LootingEnchantBonus.java
++++ b/net/minecraft/loot/functions/LootingEnchantBonus.java
+@@ -43,7 +_,7 @@
+    public ItemStack run(ItemStack p_215859_1_, LootContext p_215859_2_) {
+       Entity entity = p_215859_2_.getParamOrNull(LootParameters.KILLER_ENTITY);
+       if (entity instanceof LivingEntity) {
+-         int i = EnchantmentHelper.getMobLooting((LivingEntity)entity);
++         int i = p_215859_2_.getLootingModifier();
+          if (i == 0) {
+             return p_215859_1_;
+          }

@@ -1,0 +1,26 @@
+--- a/net/minecraft/client/gui/ResourceLoadProgressGui.java
++++ b/net/minecraft/client/gui/ResourceLoadProgressGui.java
+@@ -97,6 +_,7 @@
+       int l1 = (int)((double)this.minecraft.getWindow().getGuiScaledHeight() * 0.8325D);
+       float f3 = this.reload.getActualProgress();
+       this.currentProgress = MathHelper.clamp(this.currentProgress * 0.95F + f3 * 0.050000012F, 0.0F, 1.0F);
++      net.minecraftforge.fml.client.ClientModLoader.renderProgressText();
+       if (f < 1.0F) {
+          this.drawProgressBar(p_230430_1_, i / 2 - k1, l1 - 5, i / 2 + k1, l1 + 5, 1.0F - MathHelper.clamp(f, 0.0F, 1.0F));
+       }
+@@ -106,6 +_,7 @@
+       }
+ 
+       if (this.fadeOutStart == -1L && this.reload.isDone() && (!this.fadeIn || f1 >= 2.0F)) {
++         this.fadeOutStart = Util.getMillis(); // Moved up to guard against inf loops caused by callback
+          try {
+             this.reload.checkExceptions();
+             this.onFinish.accept(Optional.empty());
+@@ -113,7 +_,6 @@
+             this.onFinish.accept(Optional.of(throwable));
+          }
+ 
+-         this.fadeOutStart = Util.getMillis();
+          if (this.minecraft.screen != null) {
+             this.minecraft.screen.init(this.minecraft, this.minecraft.getWindow().getGuiScaledWidth(), this.minecraft.getWindow().getGuiScaledHeight());
+          }

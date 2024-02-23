@@ -1,0 +1,16 @@
+--- a/net/minecraft/entity/projectile/FireworkRocketEntity.java
++++ b/net/minecraft/entity/projectile/FireworkRocketEntity.java
+@@ -156,6 +_,13 @@
+ 
+    }
+ 
++   @Override
++   protected void onHit(RayTraceResult result) {
++      if (result.getType() == RayTraceResult.Type.MISS || !net.minecraftforge.event.ForgeEventFactory.onProjectileImpact(this, result)) {
++         super.onHit(result);
++      }
++   }
++
+    private void explode() {
+       this.level.broadcastEntityEvent(this, (byte)17);
+       this.dealExplosionDamage();

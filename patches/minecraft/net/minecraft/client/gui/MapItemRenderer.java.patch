@@ -1,0 +1,10 @@
+--- a/net/minecraft/client/gui/MapItemRenderer.java
++++ b/net/minecraft/client/gui/MapItemRenderer.java
+@@ -115,6 +_,7 @@
+ 
+          for(MapDecoration mapdecoration : this.data.decorations.values()) {
+             if (!p_228089_3_ || mapdecoration.renderOnFrame()) {
++               if (mapdecoration.render(k)) { k++; continue; }
+                p_228089_1_.pushPose();
+                p_228089_1_.translate((double)(0.0F + (float)mapdecoration.getX() / 2.0F + 64.0F), (double)(0.0F + (float)mapdecoration.getY() / 2.0F + 64.0F), (double)-0.02F);
+                p_228089_1_.mulPose(Vector3f.ZP.rotationDegrees((float)(mapdecoration.getRot() * 360) / 16.0F));

@@ -1,0 +1,10 @@
+--- a/net/minecraft/client/gui/advancements/AdvancementTabType.java
++++ b/net/minecraft/client/gui/advancements/AdvancementTabType.java
+@@ -14,6 +_,7 @@
+    LEFT(0, 64, 32, 28, 5),
+    RIGHT(96, 64, 32, 28, 5);
+ 
++   public static final int MAX_TABS = java.util.Arrays.stream(values()).mapToInt(e -> e.max).sum();
+    private final int textureX;
+    private final int textureY;
+    private final int width;

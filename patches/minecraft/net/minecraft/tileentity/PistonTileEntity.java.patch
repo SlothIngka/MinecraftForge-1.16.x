@@ -1,0 +1,11 @@
+--- a/net/minecraft/tileentity/PistonTileEntity.java
++++ b/net/minecraft/tileentity/PistonTileEntity.java
+@@ -108,7 +_,7 @@
+          List<Entity> list = this.level.getEntities((Entity)null, AabbHelper.getMovementArea(axisalignedbb, direction, d0).minmax(axisalignedbb));
+          if (!list.isEmpty()) {
+             List<AxisAlignedBB> list1 = voxelshape.toAabbs();
+-            boolean flag = this.movedState.is(Blocks.SLIME_BLOCK);
++            boolean flag = this.movedState.isSlimeBlock(); //TODO: is this patch really needed the logic of the original seems sound revisit later
+             Iterator iterator = list.iterator();
+ 
+             while(true) {

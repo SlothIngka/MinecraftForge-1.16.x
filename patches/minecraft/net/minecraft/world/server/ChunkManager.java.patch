@@ -1,0 +1,55 @@
+--- a/net/minecraft/world/server/ChunkManager.java
++++ b/net/minecraft/world/server/ChunkManager.java
+@@ -400,6 +_,7 @@
+             if (this.pendingUnloads.remove(p_219212_1_, p_219212_3_) && p_219185_5_ != null) {
+                if (p_219185_5_ instanceof Chunk) {
+                   ((Chunk)p_219185_5_).setLoaded(false);
++                  net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.world.ChunkEvent.Unload((Chunk)p_219185_5_));
+                }
+ 
+                this.save(p_219185_5_);
+@@ -581,6 +_,8 @@
+             chunk.runPostLoad();
+             if (this.entitiesInLevel.add(chunkpos.toLong())) {
+                chunk.setLoaded(true);
++               try {
++               p_219200_1_.currentlyLoading = chunk; //Forge - bypass the future chain when getChunk is called, this prevents deadlocks.
+                this.level.addAllPendingBlockEntities(chunk.getBlockEntities().values());
+                List<Entity> list = null;
+                ClassInheritanceMultiMap<Entity>[] aclassinheritancemultimap = chunk.getEntitySections();
+@@ -601,6 +_,10 @@
+                if (list != null) {
+                   list.forEach(chunk::removeEntity);
+                }
++               net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.world.ChunkEvent.Load(chunk));
++               } finally {
++                   p_219200_1_.currentlyLoading = null;//Forge - Stop bypassing the future chain.
++               }
+             }
+ 
+             return chunk;
+@@ -678,6 +_,7 @@
+ 
+             this.level.getProfiler().incrementCounter("chunkSave");
+             CompoundNBT compoundnbt = ChunkSerializer.write(this.level, p_219229_1_);
++            net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.world.ChunkDataEvent.Save(p_219229_1_, p_219229_1_.getWorldForge() != null ? p_219229_1_.getWorldForge() : this.level, compoundnbt));
+             this.write(chunkpos, compoundnbt);
+             this.markPosition(chunkpos, chunkstatus.getChunkType());
+             return true;
+@@ -734,6 +_,7 @@
+ 
+    protected void updateChunkTracking(ServerPlayerEntity p_219199_1_, ChunkPos p_219199_2_, IPacket<?>[] p_219199_3_, boolean p_219199_4_, boolean p_219199_5_) {
+       if (p_219199_1_.level == this.level) {
++         net.minecraftforge.event.ForgeEventFactory.fireChunkWatch(p_219199_4_, p_219199_5_, p_219199_1_, p_219199_2_, this.level);
+          if (p_219199_5_ && !p_219199_4_) {
+             ChunkHolder chunkholder = this.getVisibleChunkIfPresent(p_219199_2_.toLong());
+             if (chunkholder != null) {
+@@ -942,7 +_,7 @@
+    }
+ 
+    protected void addEntity(Entity p_219210_1_) {
+-      if (!(p_219210_1_ instanceof EnderDragonPartEntity)) {
++      if (!(p_219210_1_ instanceof net.minecraftforge.entity.PartEntity)) {
+          EntityType<?> entitytype = p_219210_1_.getType();
+          int i = entitytype.clientTrackingRange() * 16;
+          int j = entitytype.updateInterval();

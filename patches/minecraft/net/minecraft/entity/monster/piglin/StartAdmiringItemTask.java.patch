@@ -1,0 +1,11 @@
+--- a/net/minecraft/entity/monster/piglin/StartAdmiringItemTask.java
++++ b/net/minecraft/entity/monster/piglin/StartAdmiringItemTask.java
+@@ -13,7 +_,7 @@
+    }
+ 
+    protected boolean checkExtraStartConditions(ServerWorld p_212832_1_, E p_212832_2_) {
+-      return !p_212832_2_.getOffhandItem().isEmpty() && p_212832_2_.getOffhandItem().getItem() != Items.SHIELD;
++      return !p_212832_2_.getOffhandItem().isEmpty() && !p_212832_2_.getOffhandItem().isShield(p_212832_2_);
+    }
+ 
+    protected void start(ServerWorld p_212831_1_, E p_212831_2_, long p_212831_3_) {

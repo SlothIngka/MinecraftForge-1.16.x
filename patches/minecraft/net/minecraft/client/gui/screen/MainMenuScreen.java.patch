@@ -1,0 +1,68 @@
+--- a/net/minecraft/client/gui/screen/MainMenuScreen.java
++++ b/net/minecraft/client/gui/screen/MainMenuScreen.java
+@@ -54,6 +_,7 @@
+    private final RenderSkybox panorama = new RenderSkybox(CUBE_MAP);
+    private final boolean fading;
+    private long fadeInStart;
++   private net.minecraftforge.client.gui.NotificationModUpdateScreen modUpdateNotification;
+ 
+    public MainMenuScreen() {
+       this(false);
+@@ -97,11 +_,16 @@
+       this.copyrightX = this.width - this.copyrightWidth - 2;
+       int i = 24;
+       int j = this.height / 4 + 48;
++      Button modButton = null;
+       if (this.minecraft.isDemo()) {
+          this.createDemoMenuOptions(j, 24);
+       } else {
+          this.createNormalMenuOptions(j, 24);
++         modButton = this.addButton(new Button(this.width / 2 - 100, j + 24 * 2, 98, 20, new TranslationTextComponent("fml.menu.mods"), button -> {
++            this.minecraft.setScreen(new net.minecraftforge.fml.client.gui.screen.ModListScreen(this));
++         }));
+       }
++      modUpdateNotification = net.minecraftforge.client.gui.NotificationModUpdateScreen.init(this, modButton);
+ 
+       this.addButton(new ImageButton(this.width / 2 - 124, j + 72 + 12, 20, 20, 0, 106, 20, Button.WIDGETS_LOCATION, 256, 256, (p_213090_1_) -> {
+          this.minecraft.setScreen(new LanguageScreen(this, this.minecraft.options, this.minecraft.getLanguageManager()));
+@@ -143,7 +_,7 @@
+          Screen screen = (Screen)(this.minecraft.options.skipMultiplayerWarning ? new MultiplayerScreen(this) : new MultiplayerWarningScreen(this));
+          this.minecraft.setScreen(screen);
+       }, button$itooltip))).active = flag;
+-      (this.addButton(new Button(this.width / 2 - 100, p_73969_1_ + p_73969_2_ * 2, 200, 20, new TranslationTextComponent("menu.online"), (p_238661_1_) -> {
++      (this.addButton(new Button(this.width / 2 + 2, p_73969_1_ + p_73969_2_ * 2, 98, 20, new TranslationTextComponent("menu.online"), (p_238661_1_) -> {
+          this.realmsButtonClicked();
+       }, button$itooltip))).active = flag;
+    }
+@@ -229,6 +_,7 @@
+ 
+          this.minecraft.getTextureManager().bind(MINECRAFT_EDITION);
+          blit(p_230430_1_, j + 88, 67, 0.0F, 0.0F, 98, 14, 128, 16);
++         net.minecraftforge.client.ForgeHooksClient.renderMainMenu(this, p_230430_1_, this.font, this.width, this.height, l);
+          if (this.splash != null) {
+             RenderSystem.pushMatrix();
+             RenderSystem.translatef((float)(this.width / 2 + 90), 70.0F, 0.0F);
+@@ -251,7 +_,14 @@
+             s = s + I18n.get("menu.modded");
+          }
+ 
+-         drawString(p_230430_1_, this.font, s, 2, this.height - 10, 16777215 | l);
++         net.minecraftforge.fml.BrandingControl.forEachLine(true, true, (brdline, brd) ->
++            drawString(p_230430_1_, this.font, brd, 2, this.height - ( 10 + brdline * (this.font.lineHeight + 1)), 16777215 | l)
++         );
++
++         net.minecraftforge.fml.BrandingControl.forEachAboveCopyrightLine((brdline, brd) ->
++            drawString(p_230430_1_, this.font, brd, this.width - font.width(brd), this.height - (10 + (brdline + 1) * ( this.font.lineHeight + 1)), 16777215 | l)
++         );
++
+          drawString(p_230430_1_, this.font, "Copyright Mojang AB. Do not distribute!", this.copyrightX, this.height - 10, 16777215 | l);
+          if (p_230430_2_ > this.copyrightX && p_230430_2_ < this.copyrightX + this.copyrightWidth && p_230430_3_ > this.height - 10 && p_230430_3_ < this.height) {
+             fill(p_230430_1_, this.copyrightX, this.height - 1, this.copyrightX + this.copyrightWidth, this.height, 16777215 | l);
+@@ -265,6 +_,7 @@
+          if (this.realmsNotificationsEnabled() && f1 >= 1.0F) {
+             this.realmsNotificationsScreen.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
+          }
++         modUpdateNotification.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
+ 
+       }
+    }

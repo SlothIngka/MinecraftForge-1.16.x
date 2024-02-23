@@ -1,0 +1,27 @@
+--- a/net/minecraft/world/storage/WorldSavedData.java
++++ b/net/minecraft/world/storage/WorldSavedData.java
+@@ -8,7 +_,7 @@
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+ 
+-public abstract class WorldSavedData {
++public abstract class WorldSavedData implements net.minecraftforge.common.util.INBTSerializable<CompoundNBT> {
+    private static final Logger LOGGER = LogManager.getLogger();
+    private final String id;
+    private boolean dirty;
+@@ -51,5 +_,15 @@
+ 
+          this.setDirty(false);
+       }
++   }
++
++   @Override
++   public void deserializeNBT(CompoundNBT nbt) {
++      load(nbt);
++   }
++
++   @Override
++   public CompoundNBT serializeNBT() {
++      return save(new CompoundNBT());
+    }
+ }

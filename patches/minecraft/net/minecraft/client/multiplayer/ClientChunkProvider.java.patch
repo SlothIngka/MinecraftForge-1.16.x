@@ -1,0 +1,18 @@
+--- a/net/minecraft/client/multiplayer/ClientChunkProvider.java
++++ b/net/minecraft/client/multiplayer/ClientChunkProvider.java
+@@ -59,6 +_,7 @@
+          int i = this.storage.getIndex(p_73234_1_, p_73234_2_);
+          Chunk chunk = this.storage.getChunk(i);
+          if (isValidChunk(chunk, p_73234_1_, p_73234_2_)) {
++            net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.world.ChunkEvent.Unload(chunk));
+             this.storage.replace(i, chunk, (Chunk)null);
+          }
+ 
+@@ -112,6 +_,7 @@
+          }
+ 
+          this.level.onChunkLoaded(p_228313_1_, p_228313_2_);
++         net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.world.ChunkEvent.Load(chunk));
+          return chunk;
+       }
+    }

@@ -1,0 +1,11 @@
+--- a/net/minecraft/entity/monster/PillagerEntity.java
++++ b/net/minecraft/entity/monster/PillagerEntity.java
+@@ -120,7 +_,7 @@
+    public AbstractIllagerEntity.ArmPose getArmPose() {
+       if (this.isChargingCrossbow()) {
+          return AbstractIllagerEntity.ArmPose.CROSSBOW_CHARGE;
+-      } else if (this.isHolding(Items.CROSSBOW)) {
++      } else if (this.isHolding(item -> item instanceof net.minecraft.item.CrossbowItem)) {
+          return AbstractIllagerEntity.ArmPose.CROSSBOW_HOLD;
+       } else {
+          return this.isAggressive() ? AbstractIllagerEntity.ArmPose.ATTACKING : AbstractIllagerEntity.ArmPose.NEUTRAL;

@@ -1,0 +1,9 @@
+--- a/net/minecraft/world/lighting/LightEngine.java
++++ b/net/minecraft/world/lighting/LightEngine.java
+@@ -215,4 +_,6 @@
+       long i = SectionPos.getZeroNode(SectionPos.asLong(p_223129_1_.x, 0, p_223129_1_.z));
+       this.storage.retainData(i, p_223129_2_);
+    }
++
++   public abstract int queuedUpdateSize();
+ }

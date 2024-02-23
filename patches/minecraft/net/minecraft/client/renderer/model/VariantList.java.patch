@@ -1,0 +1,11 @@
+--- a/net/minecraft/client/renderer/model/VariantList.java
++++ b/net/minecraft/client/renderer/model/VariantList.java
+@@ -64,7 +_,7 @@
+          WeightedBakedModel.Builder weightedbakedmodel$builder = new WeightedBakedModel.Builder();
+ 
+          for(Variant variant : this.getVariants()) {
+-            IBakedModel ibakedmodel = p_225613_1_.bake(variant.getModelLocation(), variant);
++            IBakedModel ibakedmodel = p_225613_1_.getBakedModel(variant.getModelLocation(), variant, p_225613_2_);
+             weightedbakedmodel$builder.add(ibakedmodel, variant.getWeight());
+          }
+ 

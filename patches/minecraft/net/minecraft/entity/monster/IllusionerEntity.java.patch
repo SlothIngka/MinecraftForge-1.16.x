@@ -1,0 +1,14 @@
+--- a/net/minecraft/entity/monster/IllusionerEntity.java
++++ b/net/minecraft/entity/monster/IllusionerEntity.java
+@@ -180,8 +_,10 @@
+    }
+ 
+    public void performRangedAttack(LivingEntity p_82196_1_, float p_82196_2_) {
+-      ItemStack itemstack = this.getProjectile(this.getItemInHand(ProjectileHelper.getWeaponHoldingHand(this, Items.BOW)));
++      ItemStack itemstack = this.getProjectile(this.getItemInHand(ProjectileHelper.getWeaponHoldingHand(this, item -> item instanceof net.minecraft.item.BowItem)));
+       AbstractArrowEntity abstractarrowentity = ProjectileHelper.getMobArrow(this, itemstack, p_82196_2_);
++      if (this.getMainHandItem().getItem() instanceof net.minecraft.item.BowItem)
++         abstractarrowentity = ((net.minecraft.item.BowItem)this.getMainHandItem().getItem()).customArrow(abstractarrowentity);
+       double d0 = p_82196_1_.getX() - this.getX();
+       double d1 = p_82196_1_.getY(0.3333333333333333D) - abstractarrowentity.getY();
+       double d2 = p_82196_1_.getZ() - this.getZ();

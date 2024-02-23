@@ -1,0 +1,79 @@
+--- a/net/minecraft/tileentity/TileEntity.java
++++ b/net/minecraft/tileentity/TileEntity.java
+@@ -16,7 +_,7 @@
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+ 
+-public abstract class TileEntity {
++public abstract class TileEntity extends net.minecraftforge.common.capabilities.CapabilityProvider<TileEntity> implements net.minecraftforge.common.extensions.IForgeTileEntity {
+    private static final Logger LOGGER = LogManager.getLogger();
+    private final TileEntityType<?> type;
+    @Nullable
+@@ -26,9 +_,12 @@
+    @Nullable
+    private BlockState blockState;
+    private boolean hasLoggedInvalidStateBefore;
++   private CompoundNBT customTileData;
+ 
+    public TileEntity(TileEntityType<?> p_i48289_1_) {
++      super(TileEntity.class);
+       this.type = p_i48289_1_;
++      this.gatherCapabilities();
+    }
+ 
+    @Nullable
+@@ -47,6 +_,8 @@
+ 
+    public void load(BlockState p_230337_1_, CompoundNBT p_230337_2_) {
+       this.worldPosition = new BlockPos(p_230337_2_.getInt("x"), p_230337_2_.getInt("y"), p_230337_2_.getInt("z"));
++      if (p_230337_2_.contains("ForgeData")) this.customTileData = p_230337_2_.getCompound("ForgeData");
++      if (getCapabilities() != null && p_230337_2_.contains("ForgeCaps")) deserializeCaps(p_230337_2_.getCompound("ForgeCaps"));
+    }
+ 
+    public CompoundNBT save(CompoundNBT p_189515_1_) {
+@@ -62,6 +_,8 @@
+          p_189516_1_.putInt("x", this.worldPosition.getX());
+          p_189516_1_.putInt("y", this.worldPosition.getY());
+          p_189516_1_.putInt("z", this.worldPosition.getZ());
++         if (this.customTileData != null) p_189516_1_.put("ForgeData", this.customTileData);
++         if (getCapabilities() != null) p_189516_1_.put("ForgeCaps", serializeCaps());
+          return p_189516_1_;
+       }
+    }
+@@ -94,7 +_,7 @@
+       if (this.level != null) {
+          this.blockState = this.level.getBlockState(this.worldPosition);
+          this.level.blockEntityChanged(this.worldPosition, this);
+-         if (!this.blockState.isAir()) {
++         if (!this.blockState.isAir(this.level, this.worldPosition)) {
+             this.level.updateNeighbourForOutputSignal(this.worldPosition, this.blockState.getBlock());
+          }
+       }
+@@ -133,6 +_,13 @@
+ 
+    public void setRemoved() {
+       this.remove = true;
++      this.invalidateCaps();
++      requestModelDataUpdate();
++   }
++
++   @Override
++   public void onChunkUnloaded() {
++      this.invalidateCaps();
+    }
+ 
+    public void clearRemoved() {
+@@ -173,6 +_,13 @@
+ 
+    public TileEntityType<?> getType() {
+       return this.type;
++   }
++
++   @Override
++   public CompoundNBT getTileData() {
++      if (this.customTileData == null)
++         this.customTileData = new CompoundNBT();
++      return this.customTileData;
+    }
+ 
+    public void logInvalidState() {

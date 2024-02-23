@@ -1,0 +1,49 @@
+--- a/net/minecraft/item/BlockItem.java
++++ b/net/minecraft/item/BlockItem.java
+@@ -69,8 +_,8 @@
+                   }
+                }
+ 
+-               SoundType soundtype = blockstate1.getSoundType();
+-               world.playSound(playerentity, blockpos, this.getPlaceSound(blockstate1), SoundCategory.BLOCKS, (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
++               SoundType soundtype = blockstate1.getSoundType(world, blockpos, p_195942_1_.getPlayer());
++               world.playSound(playerentity, blockpos, this.getPlaceSound(blockstate1, world, blockpos, p_195942_1_.getPlayer()), SoundCategory.BLOCKS, (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
+                if (playerentity == null || !playerentity.abilities.instabuild) {
+                   itemstack.shrink(1);
+                }
+@@ -81,10 +_,16 @@
+       }
+    }
+ 
++   @Deprecated //Forge: Use more sensitive version {@link BlockItem#getPlaceSound(BlockState, IBlockReader, BlockPos, Entity) }
+    protected SoundEvent getPlaceSound(BlockState p_219983_1_) {
+       return p_219983_1_.getSoundType().getPlaceSound();
+    }
+ 
++   //Forge: Sensitive version of BlockItem#getPlaceSound
++   protected SoundEvent getPlaceSound(BlockState state, World world, BlockPos pos, PlayerEntity entity) {
++      return state.getSoundType(world, pos, entity).getPlaceSound();
++   }
++
+    @Nullable
+    public BlockItemUseContext updatePlacementContext(BlockItemUseContext p_219984_1_) {
+       return p_219984_1_;
+@@ -192,10 +_,18 @@
+    }
+ 
+    public Block getBlock() {
++      return this.getBlockRaw() == null ? null : this.getBlockRaw().delegate.get();
++   }
++
++   private Block getBlockRaw() {
+       return this.block;
+    }
+ 
+    public void registerBlocks(Map<Block, Item> p_195946_1_, Item p_195946_2_) {
+       p_195946_1_.put(this.getBlock(), p_195946_2_);
++   }
++
++   public void removeFromBlockToItemMap(Map<Block, Item> blockToItemMap, Item itemIn) {
++      blockToItemMap.remove(this.getBlock());
+    }
+ }

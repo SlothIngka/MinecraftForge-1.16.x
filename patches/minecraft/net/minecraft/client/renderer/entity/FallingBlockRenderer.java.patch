@@ -1,0 +1,17 @@
+--- a/net/minecraft/client/renderer/entity/FallingBlockRenderer.java
++++ b/net/minecraft/client/renderer/entity/FallingBlockRenderer.java
+@@ -33,7 +_,13 @@
+             BlockPos blockpos = new BlockPos(p_225623_1_.getX(), p_225623_1_.getBoundingBox().maxY, p_225623_1_.getZ());
+             p_225623_4_.translate(-0.5D, 0.0D, -0.5D);
+             BlockRendererDispatcher blockrendererdispatcher = Minecraft.getInstance().getBlockRenderer();
+-            blockrendererdispatcher.getModelRenderer().tesselateBlock(world, blockrendererdispatcher.getBlockModel(blockstate), blockstate, blockpos, p_225623_4_, p_225623_5_.getBuffer(RenderTypeLookup.getMovingBlockRenderType(blockstate)), false, new Random(), blockstate.getSeed(p_225623_1_.getStartPos()), OverlayTexture.NO_OVERLAY);
++            for (net.minecraft.client.renderer.RenderType type : net.minecraft.client.renderer.RenderType.chunkBufferLayers()) {
++               if (RenderTypeLookup.canRenderInLayer(blockstate, type)) {
++                  net.minecraftforge.client.ForgeHooksClient.setRenderLayer(type);
++                  blockrendererdispatcher.getModelRenderer().tesselateBlock(world, blockrendererdispatcher.getBlockModel(blockstate), blockstate, blockpos, p_225623_4_, p_225623_5_.getBuffer(type), false, new Random(), blockstate.getSeed(p_225623_1_.getStartPos()), OverlayTexture.NO_OVERLAY);
++               }
++            }
++            net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
+             p_225623_4_.popPose();
+             super.render(p_225623_1_, p_225623_2_, p_225623_3_, p_225623_4_, p_225623_5_, p_225623_6_);
+          }

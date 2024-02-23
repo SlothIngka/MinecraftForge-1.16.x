@@ -1,0 +1,54 @@
+--- a/net/minecraft/tags/ITagCollectionSupplier.java
++++ b/net/minecraft/tags/ITagCollectionSupplier.java
+@@ -8,7 +_,7 @@
+ import net.minecraft.network.PacketBuffer;
+ import net.minecraft.util.registry.Registry;
+ 
+-public interface ITagCollectionSupplier {
++public interface ITagCollectionSupplier extends net.minecraftforge.common.extensions.IForgeTagCollectionSupplier {
+    ITagCollectionSupplier EMPTY = of(ITagCollection.empty(), ITagCollection.empty(), ITagCollection.empty(), ITagCollection.empty());
+ 
+    ITagCollection<Block> getBlocks();
+@@ -22,6 +_,7 @@
+    default void bindToGlobal() {
+       TagRegistryManager.resetAll(this);
+       Blocks.rebuildCache();
++      net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.TagsUpdatedEvent.VanillaTagTypes(this));
+    }
+ 
+    default void serializeToNetwork(PacketBuffer p_242210_1_) {
+@@ -55,6 +_,34 @@
+ 
+          public ITagCollection<EntityType<?>> getEntityTypes() {
+             return p_242209_3_;
++         }
++      };
++   }
++
++   static ITagCollectionSupplier reinjectOptionalTags(ITagCollectionSupplier tagCollectionSupplier) {
++      ITagCollection<Block> blockTagCollection = BlockTags.HELPER.reinjectOptionalTags(tagCollectionSupplier.getBlocks());
++      ITagCollection<Item> itemTagCollection = ItemTags.HELPER.reinjectOptionalTags(tagCollectionSupplier.getItems());
++      ITagCollection<Fluid> fluidTagCollection = FluidTags.HELPER.reinjectOptionalTags(tagCollectionSupplier.getFluids());
++      ITagCollection<EntityType<?>> entityTypeTagCollection = EntityTypeTags.HELPER.reinjectOptionalTags(tagCollectionSupplier.getEntityTypes());
++      return new ITagCollectionSupplier() {
++         @Override
++         public ITagCollection<Block> getBlocks() {
++            return blockTagCollection;
++         }
++
++         @Override
++         public ITagCollection<Item> getItems() {
++            return itemTagCollection;
++         }
++
++         @Override
++         public ITagCollection<Fluid> getFluids() {
++            return fluidTagCollection;
++         }
++
++         @Override
++         public ITagCollection<EntityType<?>> getEntityTypes() {
++            return entityTypeTagCollection;
+          }
+       };
+    }

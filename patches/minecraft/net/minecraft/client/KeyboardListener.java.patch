@@ -1,0 +1,67 @@
+--- a/net/minecraft/client/KeyboardListener.java
++++ b/net/minecraft/client/KeyboardListener.java
+@@ -255,7 +_,9 @@
+          }
+ 
+          INestedGuiEventHandler inestedguieventhandler = this.minecraft.screen;
+-         if (p_197961_5_ == 1 && (!(this.minecraft.screen instanceof ControlsScreen) || ((ControlsScreen)inestedguieventhandler).lastKeySelection <= Util.getMillis() - 20L)) {
++
++         if ((!(this.minecraft.screen instanceof ControlsScreen) || ((ControlsScreen)inestedguieventhandler).lastKeySelection <= Util.getMillis() - 20L)) {
++            if (p_197961_5_ == 1) {
+             if (this.minecraft.options.keyFullscreen.matches(p_197961_3_, p_197961_4_)) {
+                this.minecraft.getWindow().toggleFullScreen();
+                this.minecraft.options.fullscreen = this.minecraft.getWindow().isFullscreen();
+@@ -274,6 +_,8 @@
+                });
+                return;
+             }
++            } else if (p_197961_5_ == 0 /*GLFW_RELEASE*/ && this.minecraft.screen instanceof ControlsScreen)
++               ((ControlsScreen)this.minecraft.screen).selectedKey = null; //Forge: Unset pure modifiers.
+          }
+ 
+          boolean flag = inestedguieventhandler == null || !(inestedguieventhandler.getFocused() instanceof TextFieldWidget) || !((TextFieldWidget)inestedguieventhandler.getFocused()).canConsumeInput();
+@@ -289,10 +_,14 @@
+             Screen.wrapScreenError(() -> {
+                if (p_197961_5_ != 1 && (p_197961_5_ != 2 || !this.sendRepeatsToGui)) {
+                   if (p_197961_5_ == 0) {
+-                     aboolean[0] = inestedguieventhandler.keyReleased(p_197961_3_, p_197961_4_, p_197961_6_);
++                     aboolean[0] = net.minecraftforge.client.ForgeHooksClient.onGuiKeyReleasedPre(this.minecraft.screen, p_197961_3_, p_197961_4_, p_197961_6_);
++                     if (!aboolean[0]) aboolean[0] = inestedguieventhandler.keyReleased(p_197961_3_, p_197961_4_, p_197961_6_);
++                     if (!aboolean[0]) aboolean[0] = net.minecraftforge.client.ForgeHooksClient.onGuiKeyReleasedPost(this.minecraft.screen, p_197961_3_, p_197961_4_, p_197961_6_);
+                   }
+                } else {
+-                  aboolean[0] = inestedguieventhandler.keyPressed(p_197961_3_, p_197961_4_, p_197961_6_);
++                  aboolean[0] = net.minecraftforge.client.ForgeHooksClient.onGuiKeyPressedPre(this.minecraft.screen, p_197961_3_, p_197961_4_, p_197961_6_);
++                  if (!aboolean[0]) aboolean[0] = inestedguieventhandler.keyPressed(p_197961_3_, p_197961_4_, p_197961_6_);
++                  if (!aboolean[0]) aboolean[0] = net.minecraftforge.client.ForgeHooksClient.onGuiKeyPressedPost(this.minecraft.screen, p_197961_3_, p_197961_4_, p_197961_6_);
+                }
+ 
+             }, "keyPressed event handler", inestedguieventhandler.getClass().getCanonicalName());
+@@ -345,7 +_,7 @@
+                }
+             }
+          }
+-
++         net.minecraftforge.client.ForgeHooksClient.fireKeyInput(p_197961_3_, p_197961_4_, p_197961_5_, p_197961_6_);
+       }
+    }
+ 
+@@ -355,12 +_,16 @@
+          if (iguieventlistener != null && this.minecraft.getOverlay() == null) {
+             if (Character.charCount(p_197963_3_) == 1) {
+                Screen.wrapScreenError(() -> {
+-                  iguieventlistener.charTyped((char)p_197963_3_, p_197963_4_);
++                  if (net.minecraftforge.client.ForgeHooksClient.onGuiCharTypedPre(this.minecraft.screen, (char)p_197963_3_, p_197963_4_)) return;
++                  if (iguieventlistener.charTyped((char)p_197963_3_, p_197963_4_)) return;
++                  net.minecraftforge.client.ForgeHooksClient.onGuiCharTypedPost(this.minecraft.screen, (char)p_197963_3_, p_197963_4_);
+                }, "charTyped event handler", iguieventlistener.getClass().getCanonicalName());
+             } else {
+                for(char c0 : Character.toChars(p_197963_3_)) {
+                   Screen.wrapScreenError(() -> {
+-                     iguieventlistener.charTyped(c0, p_197963_4_);
++                     if (net.minecraftforge.client.ForgeHooksClient.onGuiCharTypedPre(this.minecraft.screen, c0, p_197963_4_)) return;
++                     if (iguieventlistener.charTyped(c0, p_197963_4_)) return;
++                     net.minecraftforge.client.ForgeHooksClient.onGuiCharTypedPost(this.minecraft.screen, c0, p_197963_4_);
+                   }, "charTyped event handler", iguieventlistener.getClass().getCanonicalName());
+                }
+             }
